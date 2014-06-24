@@ -10,6 +10,8 @@
 #include <gl/GL.h>
 #include <math.h>
 
+int window;
+
 /* ----- Lighting values ---- */
 GLfloat  whiteLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 GLfloat  sourceLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -31,6 +33,7 @@ GLuint uranusTexture;
 GLuint neptuneTexture;
 GLuint plutoTexture;
 GLuint starsTexture;
+GLuint saturnRingsTexture;
 
 /* ----- Sun positions and rotation angles ----- */
 GLfloat fSunX = 0.0f;
@@ -64,6 +67,7 @@ void RenderScene(void)
 	static float fUranusRot = 0.0f;
 	static float fNeptuneRot = 0.0f;
 	static float fPlutoRot = 0.0f;
+	static float fSaturnRingRot = 0.0f;
 
 	// Clear the window with current clearing color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -333,6 +337,35 @@ void RenderScene(void)
 	//resets the rotation
 	if(fSaturnRot >= 360.0f)
 		fSaturnRot = 0.0f;
+
+
+	/* ----- SaturnRings ----- */
+
+	pObj = gluNewQuadric();
+	gluQuadricNormals(pObj, GLU_SMOOTH);
+	gluQuadricTexture(pObj, GL_TRUE);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, saturnRingsTexture);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glRotatef(fSaturnRingRot, 0.0f, 0.0f, 1.0f);
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
+	glRotatef(-90.0, 1.0, 0.0, 0.0);
+	glScalef(1, 1, .02);
+	glRotatef(fSaturnRingRot * 3, 0.0f, 0.0f, 1.0f);
+	gluSphere(pObj, 20.0f*2, 48, 48);
+
+
+	fSaturnRingRot += 1.0;
+	//resets the rotation
+	if (fSaturnRingRot >= 360.0f)
+		fSaturnRingRot = 0.0f;
+
+	glDisable(GL_TEXTURE_2D);
+
+	gluDeleteQuadric(pObj);
 	//restores the view matrix
 	glPopMatrix();
 
@@ -473,7 +506,7 @@ void RenderScene(void)
 	glRotatef(fMoonRot * 3, 0.0f, 0.0f, 1.0f); //Rotates the moon on its spot, simulating the planet spinning
 
 	//gets the new rotation for the moon
-	fMoonRot+= 15.0f;
+	fMoonRot = 2.4f;
 	//resets the rotation
 	if(fMoonRot >= 360.0f)
 		fMoonRot = 0.0f;
@@ -570,7 +603,7 @@ int main(int argc, char* argv[])
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(1000, 600);
-	glutCreateWindow("Solar System"); //names the window
+	window = glutCreateWindow("Sonnensystem"); //names the window
 	glutReshapeFunc(ChangeSize);
 	glutDisplayFunc(RenderScene);
 	glutKeyboardFunc(keyDown); //calls this procedure everytime a key is pressed
@@ -587,10 +620,10 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-//Used as camera control
+#pragma region keyfunction
 void keyDown(unsigned char key, int x, int y) 
 {
-	 //Moves the camera to the right
+	 
 	 if (key == 'A' || key == 'a')
 	 {
 		 fSunX += 3.0f;
@@ -657,7 +690,14 @@ void keyDown(unsigned char key, int x, int y)
 		 fSunRotZ += 3.0f;
 	 }
 
+	 if (key == 27)
+	 {
+		 glutDestroyWindow(window);
+		 exit(0);
+	 }
+
 }
+#pragma endregion
 
 unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 {
@@ -707,7 +747,9 @@ void InitialiseTextures()
 	GenerateTextures("neptunemap.bmp", 10);
 	GenerateTextures("plutomap2k.bmp", 11);
 	GenerateTextures("stars.bmp", 12);
+	GenerateTextures("saturnringmap.bmp", 13);
 }
+
 
 //the char* is used to store the name of the texture file to be loaded, the number is used to determine which variable the texture is stored in
 void GenerateTextures(char *name, int i)
@@ -742,32 +784,32 @@ void GenerateTextures(char *name, int i)
 		glGenTextures(1, &moonTexture);
 		glBindTexture(GL_TEXTURE_2D, moonTexture);
 	 }
-	 if (i == 6) //gets & sets texture for the moon
+	 if (i == 6) //gets & sets texture for the mars
 	 {
 		glGenTextures(1, &marsTexture);
 		glBindTexture(GL_TEXTURE_2D, marsTexture);
 	 }
-	 if (i == 7) //gets & sets texture for the moon
+	 if (i == 7) //gets & sets texture for the jupiter
 	 {
 		glGenTextures(1, &jupiterTexture);
 		glBindTexture(GL_TEXTURE_2D, jupiterTexture);
 	 }
-	 if (i == 8) //gets & sets texture for the moon
+	 if (i == 8) //gets & sets texture for the saturn
 	 {
 		glGenTextures(1, &saturnTexture);
 		glBindTexture(GL_TEXTURE_2D, saturnTexture);
 	 }
-	 if (i == 9) //gets & sets texture for the moon
+	 if (i == 9) //gets & sets texture for the uranus
 	 {
 		glGenTextures(1, &uranusTexture);
 		glBindTexture(GL_TEXTURE_2D, uranusTexture);
 	 }
-	 if (i == 10) //gets & sets texture for the moon
+	 if (i == 10) //gets & sets texture for the neptune
 	 {
 		glGenTextures(1, &neptuneTexture);
 		glBindTexture(GL_TEXTURE_2D, neptuneTexture);
 	 }
-	 if (i == 11) //gets & sets texture for the moon
+	 if (i == 11) //gets & sets texture for the pluto
 	 {
 		glGenTextures(1, &plutoTexture);
 		glBindTexture(GL_TEXTURE_2D, plutoTexture);
@@ -776,6 +818,11 @@ void GenerateTextures(char *name, int i)
 	 {
 		glGenTextures(1, &starsTexture);
 		glBindTexture(GL_TEXTURE_2D, starsTexture);
+	 }
+	 if (i == 13)
+	 {
+		 glGenTextures(1, &saturnRingsTexture);
+		 glBindTexture(GL_TEXTURE_2D, saturnRingsTexture);
 	 }
 	 glTexImage2D(	GL_TEXTURE_2D, 0, GL_RGB, w, h,
  					0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pix);

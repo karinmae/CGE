@@ -61,8 +61,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Jasmin\FH technikum\04 sem\CGE\00 beispiele\glut-3.7.6-bin;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Jasmin\FH technikum\04 sem\CGE\00 beispiele\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\FH\4.Semester\Computergrafik\glut-3.7.6-bin;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\FH\4.Semester\Computergrafik\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
