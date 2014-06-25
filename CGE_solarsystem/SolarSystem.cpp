@@ -16,25 +16,32 @@
 
 int window;
 
-/* ----- Ship values ---- */
+/* ----- Spaceship Variablen ---- */
 float x = 50, y = -150, z = -100, graus = 0;
 int fps = 0, displayList = 0;
 
-//GLfloat lightPosShip[4] = { 50.0, 30.0, 0.0, 0.0 };
 GLfloat lightAmbShip[3] = { 0.1, 0.1, 0.1 };
 GLfloat lightDiffShip[3] = { 1.0, 1.0, 1.0 };
 
 GLMmodel* spaceship;
 
-/* ----- Lighting values ---- */
+/* ----- Spaceship Bewegungsvariablen ----- */
+int moving = 0;		// Flag = true, wenn sich die Maus bewegt 
+int mouse_x = 0;	// x-Wert der Maus  
+int mouse_y = 0;	// x-Wert der Maus 
+
+GLfloat solarShipAngle = 0;
+int testShip = 0;
+
+/* ----- Lighting Variablen ---- */
 GLfloat  whiteLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 GLfloat  sourceLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat	 lightPos[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-//a flag that is used to ensure the textures are only loaded once
-bool texturesCreated = false;
+/* ---- Textures Variablen----- */
+// Flag, das sicherstellt, dass Texturen nur einmal geladen werden
+bool texturesCreated = false;	
 
-/* ---- Textures ----- */
 GLuint sunTexture;
 GLuint mercuryTexture;
 GLuint venusTexture;
@@ -49,7 +56,7 @@ GLuint plutoTexture;
 GLuint starsTexture;
 GLuint saturnRingsTexture;
 
-/* ----- Sun positions and rotation angles ----- */
+/* ----- Sonnenposition und Rotationswinkel ----- */
 GLfloat fSunX = 0.0f;
 GLfloat fSunY = 0.0f;
 GLfloat fSunZ = -500.0f;
@@ -60,17 +67,19 @@ GLfloat fSunRotX = 0.0f;
 GLfloat fSunRotY = 0.0f;
 GLfloat fSunRotZ = 0.0f;
 
-/* ----- prototypes for the functions ---- */
+/* ----- Prototypen für die Funktionen ---- */
 void keyDown(unsigned char, int, int);
 unsigned char *LoadBmp(char *fn, int *wi, int *hi);
 void GenerateTextures(char *, int);
 void InitialiseTextures(void);
+void mouse(int, int, int, int);
+void mouseMotion(int, int);
 
-/* ---- Called to draw scene ---- */
+/* ---- Sonnensystem wird gezeichnet ----- */
 void RenderScene(void)
 {
 	GLUquadricObj* pObj;
-	/* ---- angle of revolution ---- */
+	/* ---- Drehwinkel ---- */
 	static float fMoonRot = 0.0f;
 	static float fEarthRot = 0.0f;
 	static float fMercuryRot = 0.0f;
@@ -83,56 +92,58 @@ void RenderScene(void)
 	static float fPlutoRot = 0.0f;
 	static float fSaturnRingRot = 0.0f;
 
-	// Clear the window with current clearing color
+	// Löscht das Window mit der momentanten "Clearing-Color"
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Save the matrix state and do the rotations
+	// Matrix-Zustand speichern
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
-
-	// Translate the whole scene out and into view	based on the Sun's position
+	// Verschiebt die Szene auf Basis der Sonnenposition
 	glTranslatef(fSunX, fSunY, fSunZ);
 
-	/* ----- Sun ----- */
-	glDisable(GL_LIGHTING);
+#pragma region sun
+	/* ----- Sonne ----- */
+	glDisable(GL_LIGHTING); // Licht ausschalten
 
-	pObj = gluNewQuadric(); //creates new quadric for pObj
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren 
+	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Sonnen-Textur setzen
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, sunTexture); //sets texture to the sun texture
+	glBindTexture(GL_TEXTURE_2D, sunTexture);
 
-	//Rotate the Sun on its centre
-	glRotatef(fSunRotX, 1.0f, 0.0f, 0.0f); //rotates Sun along X axis
-	glRotatef(fSunRotY, 0.0f, 1.0f, 0.0f); //rotates Sun along Y axis
-	glRotatef(fSunRotZ, 0.0f, 0.0f, 1.0f); //rotates Sun along Z axis
-	gluSphere(pObj, 25.0f, 30, 17); //draw sphere for the sun
+	// Rotation der Sonne
+	glRotatef(fSunRotX, 1.0f, 0.0f, 0.0f); // Sonne rotiert um x-Achse
+	glRotatef(fSunRotY, 0.0f, 1.0f, 0.0f); // Sonne rotiert um y-Achse
+	glRotatef(fSunRotZ, 0.0f, 0.0f, 1.0f); // Sonne rotiert um z-Achse
+	gluSphere(pObj, 172.8f, 30, 17); // Sonnen-Kugel zeichnen (Object, Radius, Slices, Stack) 
+	
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	// quadObject freigeben
+	gluDeleteQuadric(pObj);
 
-	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHTING); // Licht einschalten
 
-	// Moves the light to the position of the sun
+	// Lighting-Position auf die Sonnen-Position setzen
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+#pragma endregion
 
 #pragma region skybox
-
-	// Store the current matrix
+	/* ----- Weltraum-Himmel ----- */
+	// Speichert die aktuelle Matrix
 	glPushMatrix();
 
-	// Reset and transform the matrix.
+	// Matrix wird nun transformiert
 
-	// Enable/Disable features
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
-
-	// Just in case we set all vertices to white.
 	glColor4f(1, 1, 1, 1);
-	GLfloat val = 500.0f;
+	GLfloat val = 6000.0f; // Größe der skybox
 
-	// Render the front quad
+	// Texturen für das fordere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, -val, val);
@@ -141,7 +152,7 @@ void RenderScene(void)
 	glTexCoord2f(0, 1); glVertex3f(val, val, val);
 	glEnd();
 
-	// Render the left quad
+	// Texturen für das linke Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, -val, -val);
@@ -150,7 +161,7 @@ void RenderScene(void)
 	glTexCoord2f(0, 1); glVertex3f(val, val, -val);
 	glEnd();
 
-	// Render the back quad
+	// Texturen für das hintere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, -val, -val);
@@ -160,7 +171,7 @@ void RenderScene(void)
 
 	glEnd();
 
-	// Render the right quad
+	// Texturen für das rechte Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, val, -val);
@@ -169,7 +180,7 @@ void RenderScene(void)
 	glTexCoord2f(0, 1); glVertex3f(-val, -val, -val);
 	glEnd();
 
-	// Render the top quad
+	// Texturen für das obere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, val, -val);
@@ -178,7 +189,7 @@ void RenderScene(void)
 	glTexCoord2f(0, 1); glVertex3f(-val, val, -val);
 	glEnd();
 
-	// Render the bottom quad
+	// Texturen für das untere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, -val, -val);
@@ -187,200 +198,204 @@ void RenderScene(void)
 	glTexCoord2f(0, 1); glVertex3f(val, -val, -val);
 	glEnd();
 
-	// Restore enable bits and matrix
 	glPopAttrib();
 	glPopMatrix();
-
 #pragma endregion
 
 #pragma region mercury 
-	/* ----- Mercury ----- */
-	glPushMatrix(); //save view matrix
+	/* ----- Merkur ----- */
+	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren 
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Merkur-Textur setzen
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, mercuryTexture); //sets it to the mercury texture
+	glBindTexture(GL_TEXTURE_2D, mercuryTexture);
 
-	//Rotate coordinate system for Mercury
+	// Rotationskoordinaten für Merkur
 	glRotatef(fMercuryRot, 1.0f, 2.0f, 0.0f);
 
-	//Draw Mercury
-	glTranslatef(45.0f, -15.0f, 0.0f); //moves the position away and out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates mercury on its spot, fixing the texture display
-	glRotatef(fMercuryRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Mercury on its spot, simulating the planet spinning
-	gluSphere(pObj, 8.0f, 30, 17); //draws the sphere for mercury
+	// Merkur zeichnen
+	glTranslatef(200.0f, -15.0f, 0.0f); // Merkur von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fMercuryRot * 3, 0.0f, 0.0f, 1.0f); // Merkur-Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 6.4f, 30, 17); // Merkur - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
 	gluDeleteQuadric(pObj);
 
-	//gets the new rotation position for mercury
+	// neue Rotationsposition von Merkur (Rotationsgeschwindigkeit um die Sonne)
 	fMercuryRot += 20.0f;
-	//resets the rotation of mercury
+	// Rotation zurücksetzen bei 360 Grad
 	if (fMercuryRot >= 360.0f)
 		fMercuryRot = 0.0f;
 
-	glPopMatrix(); //restore viewing Matrix
-
+	glPopMatrix();
 #pragma endregion
 
 #pragma region venus
 	/* ----- Venus ----- */
-	glPushMatrix(); //stores the view matrix
+	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren 
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Venus-Textur setzen
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, venusTexture); //sets the texture to the texture for venus
+	glBindTexture(GL_TEXTURE_2D, venusTexture);
 
-	//Rotate coordinate system for Venus
+	// Rotationskoordinaten für Venus
 	glRotatef(fVenusRot, 0.0f, 1.0f, 0.0f);
 
-	//Draw Venus
-	glTranslatef(65.0f, 0.0f, 0.0f); //moves the position away and out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates venus on its spot, fixing the texture display
-	glRotatef(fVenusRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Venus on its spot, simulating the planet spinning
-	gluSphere(pObj, 14.0f, 30, 17); //draws the sphere for venus
+	// Venus zeichnen
+	glTranslatef(350.0f, 0.0f, 0.0f); // Venus von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fVenusRot * 3, 0.0f, 0.0f, 1.0f); // Venus-Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 16.0f, 30, 17); // Venus - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	gluDeleteQuadric(pObj);
 
-	//gets the new rotation for venus
+	// neue Rotationsposition von Venus (Rotationsgeschwindigkeit um die Sonne)
 	fVenusRot += 10.0f;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fVenusRot >= 360.0f)
 		fVenusRot = 0.0f;
 
-	//restores the view matrix
 	glPopMatrix();
-
 #pragma endregion
 
 #pragma region mars
 	/* ----- Mars ----- */
 	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren 
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Mars-Textur setzen
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, marsTexture); //sets the texture to mars' texture
+	glBindTexture(GL_TEXTURE_2D, marsTexture);
 
-	//Rotate coordinate system for Mars
+	// Rotationskoordinaten für Mars
 	glRotatef(fMarsRot, 0.0f, 1.0f, 0.3f);
 
-	//Draw Mars
-	glTranslatef(130.0f, 0.0f, 0.0f); //positions mars out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates mars on its spot, fixing the texture display
-	glRotatef(fMarsRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Mars on its spot, simulating the planet spinning
-	gluSphere(pObj, 7.0f, 30, 17); //Draws the sphere
+	// Mars zeichnen
+	glTranslatef(700.0f, 0.0f, 0.0f); // Mars von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fMarsRot * 3, 0.0f, 0.0f, 1.0f); // Mars - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 8.0f, 30, 17); // Mars - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
 	gluDeleteQuadric(pObj);
 
-	//gets the next rotation value for mars to orbit around the sun
+	// neue Rotationsposition von Mars (Rotationsgeschwindigkeit um die Sonne)
 	fMarsRot += 4.0f;
-	//resets the rotation value
+	// Rotation zurücksetzen bei 360 Grad
 	if (fMarsRot >= 360.0f)
 		fMarsRot = 0.0f;
 
-	//resets the view matrix to focus on the sun
 	glPopMatrix();
 
 #pragma endregion
 
 #pragma region jupiter
 	/* ----- Jupiter ----- */
-	glPushMatrix(); //stores the view matrix
+	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Jupiter-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, jupiterTexture); //sets it to jupiter's texture
 
-	//Rotate coordinate system for Jupiter
+	// Rotationskoordinaten für Jupiter
 	glRotatef(fJupiterRot, 0.0f, 1.0f, -0.3f);
 
-	//Draw Jupiter
-	glTranslatef(200.0f, 0.0f, 0.0f); //moves the position out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates Jupiter on its spot, fixing the texture display
-	glRotatef(fJupiterRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Jupiter on its spot, simulating the planet spinning
-	gluSphere(pObj, 22.0f, 30, 17); //draws the sphere
+	// Jupiter zeichnen
+	glTranslatef(1300.0f, 0.0f, 0.0f); // Jupiter von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fJupiterRot * 3, 0.0f, 0.0f, 1.0f); // Jupiter - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 88.0f, 30, 17); // Jupiter - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	gluDeleteQuadric(pObj);
 
-	//gets the new rotation for jupiter
+	// neue Rotationsposition von Jupiter (Rotationsgeschwindigkeit um die Sonne)
 	fJupiterRot += 2.0f;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fJupiterRot >= 360.0f)
 		fJupiterRot = 0.0f;
 
-	//restores the view matrix
 	glPopMatrix();
-
 #pragma endregion
 
 #pragma region saturn
 	/* ----- Saturn ----- */
 	glPushMatrix(); //saves the view matrix
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Saturn-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, saturnTexture); //sets it to saturn's texture
 
-	//Rotate coordinate system for Saturn
+	// Rotationskoordinaten für Saturn
 	glRotatef(fSaturnRot, 0.0f, 0.8f, -0.2f);
 
-	//Draw Saturn
-	glTranslatef(250.0f, 0.0f, 0.0f); //moves away from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates Saturn on its spot, fixing the texture display
-	glRotatef(fSaturnRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Saturn on its spot, simulating the planet spinning
-	gluSphere(pObj, 20.0f, 30, 17); //draws the sphere
+	// Saturn zeichnen
+	glTranslatef(2375.0f, 0.0f, 0.0f); // Saturn von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fSaturnRot * 3, 0.0f, 0.0f, 1.0f); // Saturn - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 72.0f, 30, 17); // Saturn - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	gluDeleteQuadric(pObj);
 
-	//gets the new rotation value for saturn
+	// neue Rotationsposition von Saturn (Rotationsgeschwindigkeit um die Sonne)
 	fSaturnRot += 1.5f;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fSaturnRot >= 360.0f)
 		fSaturnRot = 0.0f;
+#pragma endregion
 
+#pragma region saturnrings
+	/* ----- Saturnringe ----- */
 
-	/* ----- SaturnRings ----- */
-
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricNormals(pObj, GLU_SMOOTH);
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Saturnring-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, saturnRingsTexture);
-
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
+	// Rotationskoordinaten für Saturnringe
 	glRotatef(fSaturnRingRot, 0.0f, 0.0f, 1.0f);
 	glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
 	glRotatef(-90.0, 1.0, 0.0, 0.0);
 	glScalef(1, 1, .02);
 	glRotatef(fSaturnRingRot * 3, 0.0f, 0.0f, 1.0f);
-	gluSphere(pObj, 20.0f * 2, 48, 48);
+	gluSphere(pObj, 72.0f * 2, 48, 48); // Saturnringe zeichnen
 
-
+	// neue Rotationsposition vom Saturnring
 	fSaturnRingRot += 1.0;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fSaturnRingRot >= 360.0f)
 		fSaturnRingRot = 0.0f;
 
 	glDisable(GL_TEXTURE_2D);
 
 	gluDeleteQuadric(pObj);
-	//restores the view matrix
 	glPopMatrix();
 
 #pragma endregion
@@ -389,211 +404,216 @@ void RenderScene(void)
 	/* ----- Uranus ------ */
 	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Uranus-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, uranusTexture); //sets texture to uranus' texture
 
-	//Rotate coordinate system for Uranus
+	// Rotationskoordinaten für Uranus
 	glRotatef(fUranusRot, 0.0f, 0.8f, 0.2f);
 
-	//Draw Uranus
-	glTranslatef(285.0f, 0.0f, 0.0f); //moves away and out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates Uranus on its spot, fixing the texture display
-	glRotatef(fUranusRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Uranus on its spot, simulating the planet spinning
-	gluSphere(pObj, 10.0f, 30, 17); //draws the sphere
+	// Uranus zeichnen
+	glTranslatef(3167.0f, 0.0f, 0.0f); // Uranus von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fUranusRot * 3, 0.0f, 0.0f, 1.0f); // Uranus - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 32.0f, 30, 17); // Uranus - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	gluDeleteQuadric(pObj);
 
-	//gets the new rotation for uranus
+	// neue Rotationsposition von Uranus (Rotationsgeschwindigkeit um die Sonne)
 	fUranusRot += 1.0f;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fUranusRot >= 360.0f)
 		fUranusRot = 0.0f;
 
-	//restores the view matrix
 	glPopMatrix();
-
 #pragma endregion
 
 #pragma region neptune
-	/* ----- Neptune ----- */
+	/* ----- Neptun ----- */
 	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Neptun-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, neptuneTexture); //sets it to neptune's texture
 
-	//Rotate coordinate system for Neptune
+	// Rotationskoordinaten für Neptun
 	glRotatef(fNeptuneRot, 0.0f, 0.8f, 0.2f);
 
-	//Draw Neptune
-	glTranslatef(300.0f, 0.0f, 0.0f); //moves the position out from the sun
-	glRotatef(300.0f, 1.0f, 0.0f, 0.0f); //Rotates Neptune on its spot, fixing the texture display
-	glRotatef(fNeptuneRot * 3, 0.0f, 0.0f, 1.0f); //Rotates Neptune on its spot, simulating the planet spinning
-	gluSphere(pObj, 12.0f, 30, 17); //draw the sphere for neptune
+	// Neptun zeichnen
+	glTranslatef(4166.0f, 0.0f, 0.0f); // Neptun von der Sonne wegverschieben
+	glRotatef(300.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fNeptuneRot * 3, 0.0f, 0.0f, 1.0f); // Neptun - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 32.0f, 30, 17); // Neptun - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
-	gluDeleteQuadric(pObj); //frees pObj
+	gluDeleteQuadric(pObj);
 
-	//gets the new rotation value for neptune
+	// neue Rotationsposition von Neptun (Rotationsgeschwindigkeit um die Sonne)
 	fNeptuneRot += 0.6f;
-	//resets the rotation
+	// Rotation zurücksetzen bei 360 Grad
 	if (fNeptuneRot >= 360.0f)
 		fNeptuneRot = 0.0f;
 
-	//restores the view matrix
 	glPopMatrix();
-
 #pragma endregion
 
 #pragma region pluto
 	/* ----- Pluto ----- */
-	glPushMatrix(); //stores the view matrix
+	glPushMatrix();
 
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
 	pObj = gluNewQuadric();
 	gluQuadricTexture(pObj, GL_TRUE);
 
+	// Pluto-Textur setzen
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, plutoTexture); //sets it to plutos texture
 
-	//Rotate coordinate system for Pluto
+	// Rotationskoordinaten für Pluto
 	glRotatef(fPlutoRot, 0.0f, 0.8f, 0.2f);
 
-	//Draw Pluto
-	glTranslatef(325.0f, 0.0f, 0.0f); //moves away and out from the sun
-	glRotatef(300.0f, 1.0f, 0.0f, 0.0f); //Rotates Pluto on its spot, fixing the texture display
-	glRotatef(fPlutoRot * 3, 0.0f, 0.0f, 1.0f); //Rotates the Pluto on its spot, simulating the planet spinning
-	gluSphere(pObj, 12.0f, 30, 17); //draws the sphere
-	glDisable(GL_TEXTURE_2D);
-
-	gluDeleteQuadric(pObj); //frees pObj
-
-	//gets the new rotation for pluto
-	fPlutoRot += 0.2f;
-	//resets the rotation
-	if (fPlutoRot >= 360.0f)
-		fPlutoRot = 0.0f;
-
-	//restores the view matrix
-	glPopMatrix();
-
-#pragma endregion
-
-#pragma region earth
-	/* ----- Earth ----- */
-	glPushMatrix();
-
-	pObj = gluNewQuadric();
-	gluQuadricTexture(pObj, GL_TRUE);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, earthTexture);
-
-	// Rotate coordinate system for Earth
-	glRotatef(fEarthRot, 0.0f, 1.0f, 0.0f); //rotate earth around the Sun
-
-	// Draw the Earth
-	glTranslatef(100.0f, 0.0f, 0.0f); //moves the position out from the sun
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates the Earth on its spot, fixing the texture display
-	glRotatef(fEarthRot * 3, 0.0f, 0.0f, 1.0f); //Rotates the Earth on its spot, simulating the planet spinning
-	gluSphere(pObj, 16.0f, 30, 17); //draws the sphere for the earth
-	glDisable(GL_TEXTURE_2D);
-
-	gluDeleteQuadric(pObj); //frees pObj
-
-#pragma region earthMoon
-	/* ----- Moon ----- */
-	// Rotate from Earth based coordinates and draw Moon
-	pObj = gluNewQuadric();
-	gluQuadricTexture(pObj, GL_TRUE);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, moonTexture); //sets the texture to the moon
-	glRotatef(fMoonRot, 0.0f, 1.0f, 0.0f); //rotates the moon around the earth
-	glTranslatef(25.0f, 0.0f, 0.0f); //moves away and out from the earth
-	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); //Rotates the moon on its spot, fixing the texture display
-	glRotatef(fMoonRot * 3, 0.0f, 0.0f, 1.0f); //Rotates the moon on its spot, simulating the planet spinning
-
-	//gets the new rotation for the moon
-	fMoonRot = 2.4f;
-	//resets the rotation
-	if (fMoonRot >= 360.0f)
-		fMoonRot = 0.0f;
-
-	gluSphere(pObj, 4.0f, 30, 17); //draws the sphere for the moon
+	// Pluto zeichnen
+	glTranslatef(5000.0f, 0.0f, 0.0f); // Pluto von der Sonne wegverschieben
+	glRotatef(300.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fPlutoRot * 3, 0.0f, 0.0f, 1.0f); // Pluto - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 3.2f, 30, 17); // Pluto - Kugel zeichnen(Object, Radius, Slices, Stack)
 	glDisable(GL_TEXTURE_2D);
 
 	gluDeleteQuadric(pObj);
-	// Restore the matrix state
-	glPopMatrix();	// Modelview matrix
 
+	// neue Rotationsposition von Pluto (Rotationsgeschwindigkeit um die Sonne)
+	fPlutoRot += 0.2f;
+	// Rotation zurücksetzen bei 360 Grad
+	if (fPlutoRot >= 360.0f)
+		fPlutoRot = 0.0f;
+
+	glPopMatrix();
 #pragma endregion
 
+#pragma region earth
+	/* ----- Erde ----- */
+	glPushMatrix();
 
-	// Step earth orbit 5 degrees
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
+	pObj = gluNewQuadric();
+	gluQuadricTexture(pObj, GL_TRUE);
+
+	// Erden-Textur setzen
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, earthTexture);
+
+	// Rotationskoordinaten für Erde (Rotation um die Sonne)
+	glRotatef(fEarthRot, 0.0f, 1.0f, 0.0f);
+
+	// Erde zeichnen
+	glTranslatef(500.0f, 0.0f, 0.0f); // Erde von der Sonne wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fEarthRot * 3, 0.0f, 0.0f, 1.0f); // Erde - Rotation um sich selber - simuliert Eigenrotation
+	gluSphere(pObj, 16.0f, 30, 17); // Erde - Kugel zeichnen(Object, Radius, Slices, Stack)
+	glDisable(GL_TEXTURE_2D);
+
+	gluDeleteQuadric(pObj);
+#pragma endregion
+
+#pragma region earthMoon
+	/* ----- Mond ----- */
+
+	// quadObject erstellen und Texturkoordinaten dafür spezifizieren
+	pObj = gluNewQuadric();
+	gluQuadricTexture(pObj, GL_TRUE);
+
+	// Mond-Textur setzen
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, moonTexture);
+
+	glRotatef(fMoonRot, 0.0f, 1.0f, 0.0f); // Mond-Rotation um die Erde
+	glTranslatef(25.0f, 0.0f, 0.0f); // Mond von der Erde wegverschieben
+	glRotatef(270.0f, 1.0f, 0.0f, 0.0f); // dreht die Textur
+	glRotatef(fMoonRot * 3, 0.0f, 0.0f, 1.0f); // Mond - Rotation um sich selber - simuliert Eigenrotation
+
+	// neue Rotationsposition vom Mond
+	fMoonRot = 2.4f;
+	// Rotation zurücksetzen bei 360 Grad
+	if (fMoonRot >= 360.0f)
+		fMoonRot = 0.0f;
+
+	// Mond zeichnen
+	gluSphere(pObj, 4.3f, 30, 17); // Mond - Kugel zeichnen(Object, Radius, Slices, Stack)
+	glDisable(GL_TEXTURE_2D);
+
+	gluDeleteQuadric(pObj);
+	glPopMatrix();
+
+	// neue Rotationsposition von der Erde
 	fEarthRot += 5.0f;
-	//resets the rotation value
+	// Rotation zurücksetzen bei 360 Grad
 	if (fEarthRot >= 360.0f)
 		fEarthRot = 0.0f;
-	// Restore the matrix state
-	glPopMatrix();	// Modelview matrix
-
+	
+	glPopMatrix();
 #pragma endregion
 
 #pragma region ship
 	/* ----- Ship ----- */
 	glLoadIdentity();
 
-	gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an. 
-		100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird.
-		0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt. 
+	gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an
+		100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
+		0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt 
 
+	// Ligting für das Spaceship
 	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbShip);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffShip);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glTranslatef(x, y, z);
-	glRotatef(graus, 1.0, 0.0, 0.0);
+	glTranslatef(x, y, z); // Position des Raumschiffes in der Skybox
+	//glRotatef(graus, 1.0, 0.0, 0.0);
+
+	// Spaceship-Rotation mit der Maus steuern
+	glRotatef(solarShipAngle, 0.0, 0.0, 1.0);
+	//glRotatef(solarShipAngle, 0.0, 1.0, 0.0);
+	//glRotatef(solarShipAngle, 1.0, 0.0, 0.0);
 
 	glCallList(displayList);
 #pragma endregion
 
-	// Show the image
+	// Sonnensystem anzeigen
 	glutSwapBuffers();
 
 }
 
-// This function does any needed initialization on the rendering
-// context. 
-
+/* ----- Initialisierung der Funktion für Ligthing, etc. ----- */
 void SetupRC()
 {
-	// Light values and coordinates
-	glEnable(GL_DEPTH_TEST);	// Hidden surface removal
-	glFrontFace(GL_CCW);		// Counter clock-wise polygons face out
-	glEnable(GL_CULL_FACE);		// Do not calculate inside of jet
+	// Licht-Werte und Koordinaten
+	glEnable(GL_DEPTH_TEST); // Tiefenbuffer aktivieren
+	glFrontFace(GL_CCW);	
+	glEnable(GL_CULL_FACE);
 
-	// Enable lighting
+	// Lighting aktivieren
 	glEnable(GL_LIGHTING);
 
-	// Setup and enable light 0
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, whiteLight);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, sourceLight);
 	//glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
 	glEnable(GL_LIGHT0);
 
-	// Enable color tracking
+	// Colortracking aktivieren (mehrere Materialparameter benutzen die aktuelle Farbeinstellung)
 	glEnable(GL_COLOR_MATERIAL);
 
-	// Set Material properties to follow glColor values
+	// Materialeigenschaften festsetzen
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
-	// Black blue background
+	// Hintergrundfarbe
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
@@ -603,29 +623,26 @@ void TimerFunc(int value)
 	glutTimerFunc(100, TimerFunc, 1);
 }
 
-//allows the window size to be changed by the user
+/* ----- Ermöglich die Windows-Größe zu verändert ----- */
 void ChangeSize(int w, int h)
 {
 	GLfloat fAspect;
 
-	// Prevent a divide by zero
-	if (h == 0)
-		h = 1;
+	// Division durch Null vermeiden
+	if (h == 0)	h = 1;
 
-	// Set Viewport to window dimensions
+	// Viewport auf Windows-Dimensionen festlegen
 	glViewport(0, 0, w, h);
 
-	// Calculate aspect ratio of the window
+	// Window-Verhältnis berechnen
 	fAspect = (GLfloat)w / (GLfloat)h;
 
-	// Set the perspective coordinate system
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// field of view of 45 degrees, near and far planes 1.0 and 800
-	gluPerspective(45.0f, fAspect, 1.0, 1600.0);
+	// Ansicht hat 45 Grad und liegt zwischen 1 und 6000
+	gluPerspective(45.0f, fAspect, 1.0, 6000.0);
 
-	// Modelview matrix reset
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -634,29 +651,36 @@ int main(int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(1000, 600);
-	window = glutCreateWindow("SolarSystem"); //names the window
+	glutInitWindowSize(1000, 600); // Window-Größe
+	window = glutCreateWindow("SolarSystem"); // Window-Name
 
 	glutReshapeFunc(ChangeSize);
 	glutDisplayFunc(RenderScene);
-	glutKeyboardFunc(keyDown); //calls this procedure everytime a key is pressed	
+	glutKeyboardFunc(keyDown); // wird aufgerufen, wenn eine Taste gedrückt wird	
 	glutTimerFunc(250, TimerFunc, 1);
 	SetupRC();
 
+	// Mausfunktionen
+	glutMouseFunc(mouse);
+	glutMotionFunc(mouseMotion);
+	
 	/* ----- Ship ----- */
 	spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
-	spaceship = glmReadOBJ("ship.obj");
+	spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
 
 	displayList = glGenLists(1);
-	glNewList(displayList, GL_COMPILE);
-	glmDraw(spaceship, GLM_SMOOTH);
+		glNewList(displayList, GL_COMPILE);
+		glmFacetNormals(spaceship);
+		glmVertexNormals(spaceship, 90.0);
+		glmLinearTexture(spaceship);
+		glmDraw(spaceship, GLM_SMOOTH);
 	glEndList();
 
-	//a flag check to make sur ethe textures are only loaded in once
+	// Flag, welches sicherstellt, dass die Texturen nur einmal geladen werden
 	if (texturesCreated == false)
 	{
 		InitialiseTextures();
-		texturesCreated = true; //sets the flag to true so this if statement doesn't execute again
+		texturesCreated = true;
 	}
 
 	glutMainLoop();
@@ -667,73 +691,84 @@ int main(int argc, char* argv[])
 #pragma region keyfunction
 void keyDown(unsigned char key, int x, int y)
 {
-	//Moves the camera to the left
+	// bewegt Kamera nach links
 	if (key == 'A' || key == 'a')
 	{
-		fSunX += 3.0f;
-		fCamX += -3.0f;
+		fSunX += 30.0f;
+		//fCamX += -30.0f;
+		/*
+		if (testShip == 0) {
+			solarShipAngle += 30.0f;
+			testShip = 1;
+		}
+		else {
+			solarShipAngle -= 30.0f;
+			testShip = 0;
+		}
+		*/
 	}
-	//Moves the camera to the right
+	// bewegt Kamera nach rechts
 	if (key == 'D' || key == 'd')
 	{
-		fSunX += -3.0f;
-		fCamX += 3.0f;
+		fSunX += -30.0f;
+		//fCamX += 30.0f;
 	}
-	//Moves the camera up
+	// bewegt Kamera nach oben
 	if (key == 'W' || key == 'w')
 	{
-		fSunY += -3.0f;
-		fCamY += 3.0f;
+		fSunY += -30.0f;
+		//fCamY += 30.0f;
 	}
-	//Moves the camera down
+	// Bewegt Kamera nach unten
 	if (key == 'S' || key == 's')
 	{
-		fSunY += 3.0f;
-		fCamY += -3.0f;
+		fSunY += 30.0f;
+		//fCamY += -30.0f;
 	}
-	//Zooms the camera out
+	// zoomt die Kamera raus
 	if (key == 'X' || key == 'x')
 	{
-		fSunZ += -3.0f;
-		fCamZ += 3.0f;
+		fSunZ += -30.0f;
+		//fCamZ += 30.0f;
 	}
-	//Zooms the camera in
+	// zoomt die Kamera rein
 	if (key == 'Z' || key == 'z')
 	{
-		fSunZ += 3.0f;
-		fCamZ += -3.0f;
+		fSunZ += 30.0f;
+		//fCamZ += -30.0f;
 	}
-	//Rotates the camera along the positive X axis
+	// rotiert die Kamera um die positive x-Achse 
 	if (key == 'J' || key == 'j')
 	{
 		fSunRotY += 3.0f;
 	}
-	//Rotates the camera along the negative X axis
+	// rotiert die Kamera um die negative x-Achse 
 	if (key == 'L' || key == 'l')
 	{
 		fSunRotY += -3.0f;
 	}
-	//Rotates the camera along the negative Y axis
+	// rotiert die Kamera um die negative y-Achse 
 	if (key == 'I' || key == 'i')
 	{
 		fSunRotX += 3.0f;
 	}
-	//Rotates the camera along the positive Y axis
+	// rotiert die Kamera um die positive y-Achse 
 	if (key == 'K' || key == 'k')
 	{
 		fSunRotX += -3.0f;
 	}
-	//Rotates the camera along the positive Z axis
+	// rotiert die Kamera um die negative z-Achse
 	if (key == 'M' || key == 'm')
 	{
 		fSunRotZ += -3.0f;
 	}
-	//Rotates the camera along the positive Z axis
+	// rotiert die Kamera um die positive z-Achse
 	if (key == 'N' || key == 'n')
 	{
 		fSunRotZ += 3.0f;
 	}
 
+	// schließt das Programm mit ESC
 	if (key == 27)
 	{
 		glutDestroyWindow(window);
@@ -752,7 +787,7 @@ unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 	unsigned char *lpBitmapBits;
 	long imagesize, nc;
 
-	// read the bitmap
+	// liest das .bmp File
 	t24 = fopen((char *)fn, "rb");
 	if (t24 == NULL){ printf("Could not open input file\n"); exit(0); }
 	fread((char *)&bmfh, sizeof(BITMAPFILEHEADER), 1, t24);
@@ -778,7 +813,7 @@ unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 
 void InitialiseTextures()
 {
-	//calls the procedure to load and store every texture
+	// ruft die Funktion "GenerateTextures" auf um jede Textur zu laden mit Hilfe eines Index
 	GenerateTextures("earthmap1k.bmp", 1);
 	GenerateTextures("sunmap.bmp", 2);
 	GenerateTextures("mercurymap.bmp", 3);
@@ -794,87 +829,126 @@ void InitialiseTextures()
 	GenerateTextures("saturnringmap.bmp", 13);
 }
 
-
-//the char* is used to store the name of the texture file to be loaded, the number is used to determine which variable the texture is stored in
+// name: steht für den Filenamen der Texture
+// i: steht für den index-number, damit die Textur dem richtigen Planeten zugeordnet werden kann
 void GenerateTextures(char *name, int i)
 {
 	unsigned char *pix;
 	int w, h;
 	glEnable(GL_TEXTURE_2D);
-	//assigns pix to a texture
+	
+	// Textur aus Datei laden
 	pix = LoadBmp(name, &w, &h);
-	if (i == 1) //gets & sets texture for the earth
+	if (i == 1) // zuordnen der Textur für die Erde
 	{
 		glGenTextures(1, &earthTexture);
 		glBindTexture(GL_TEXTURE_2D, earthTexture);
 	}
-	if (i == 2) //gets & sets texture for the sun
+	if (i == 2) // zuordnen der Textur für die Sonne
 	{
 		glGenTextures(1, &sunTexture);
 		glBindTexture(GL_TEXTURE_2D, sunTexture);
 	}
-	if (i == 3) //gets & sets texture for mercury
+	if (i == 3) // zuordnen der Textur für den Merkur
 	{
 		glGenTextures(1, &mercuryTexture);
 		glBindTexture(GL_TEXTURE_2D, mercuryTexture);
 	}
-	if (i == 4) //gets & sets texture for venus
+	if (i == 4) // zuordnen der Textur für die Venus
 	{
 		glGenTextures(1, &venusTexture);
 		glBindTexture(GL_TEXTURE_2D, venusTexture);
 	}
-	if (i == 5) //gets & sets texture for the moon
+	if (i == 5) // zuordnen der Textur für den Mond
 	{
 		glGenTextures(1, &moonTexture);
 		glBindTexture(GL_TEXTURE_2D, moonTexture);
 	}
-	if (i == 6) //gets & sets texture for the mars
+	if (i == 6) // zuordnen der Textur für den Mars
 	{
 		glGenTextures(1, &marsTexture);
 		glBindTexture(GL_TEXTURE_2D, marsTexture);
 	}
-	if (i == 7) //gets & sets texture for the jupiter
+	if (i == 7) // zuordnen der Textur für den Jupiter
 	{
 		glGenTextures(1, &jupiterTexture);
 		glBindTexture(GL_TEXTURE_2D, jupiterTexture);
 	}
-	if (i == 8) //gets & sets texture for the saturn
+	if (i == 8) // zuordnen der Textur für den Saturn
 	{
 		glGenTextures(1, &saturnTexture);
 		glBindTexture(GL_TEXTURE_2D, saturnTexture);
 	}
-	if (i == 9) //gets & sets texture for the uranus
+	if (i == 9) // zuordnen der Textur für den Uranus
 	{
 		glGenTextures(1, &uranusTexture);
 		glBindTexture(GL_TEXTURE_2D, uranusTexture);
 	}
-	if (i == 10) //gets & sets texture for the neptune
+	if (i == 10) // zuordnen der Textur für den Neptun
 	{
 		glGenTextures(1, &neptuneTexture);
 		glBindTexture(GL_TEXTURE_2D, neptuneTexture);
 	}
-	if (i == 11) //gets & sets texture for the pluto
+	if (i == 11) // zuordnen der Textur für den Pluto
 	{
 		glGenTextures(1, &plutoTexture);
 		glBindTexture(GL_TEXTURE_2D, plutoTexture);
 	}
-	if (i == 12) //gets & sets texture for the stars
+	if (i == 12) // zuordnen der Textur für den Sternen-Hintergrund
 	{
 		glGenTextures(1, &starsTexture);
 		glBindTexture(GL_TEXTURE_2D, starsTexture);
 	}
-	if (i == 13)
+	if (i == 13) // zuordnen der Textur für die Saturnringe
 	{
 		glGenTextures(1, &saturnRingsTexture);
 		glBindTexture(GL_TEXTURE_2D, saturnRingsTexture);
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h,
-		0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pix);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pix);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	free(pix); //deletes the data held by pix
+	
+	free(pix);
 	glDisable(GL_TEXTURE_2D);
 }
+
+#pragma region mousefunction
+void mouse(int button, int state, int x, int y)
+{
+	switch (button) {
+	case GLUT_LEFT_BUTTON: 
+		if (state == GLUT_DOWN){ // Maustaste gedrückt
+			moving = 1;
+			// Maus-Koordinaten
+			mouse_x = x;
+			mouse_y = y;
+
+		}
+		else if (state == GLUT_UP){ // Maustaste nicht gedrückt
+			moving = 0;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	glutPostRedisplay();
+}
+
+void mouseMotion(int x, int y) {
+
+	if (moving) { // Maustaste ist gedrückt
+
+		solarShipAngle = solarShipAngle + (x - mouse_x);
+
+		mouse_x = x;
+		mouse_y = y;
+		glutPostRedisplay();
+	}
+}
+#pragma endregion
