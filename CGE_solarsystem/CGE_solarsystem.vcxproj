@@ -11,12 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SolarSystem.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\SolarSystem.h" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="..\earthmap1k.bmp" />
     <Image Include="..\jupitermap.bmp" />
     <Image Include="..\marsmap1k.bmp" />
@@ -29,6 +23,14 @@
     <Image Include="..\sunmap.bmp" />
     <Image Include="..\uranusmap.bmp" />
     <Image Include="..\venusmap.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="glm.cpp" />
+    <ClCompile Include="SolarSystem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="glm.h" />
+    <ClInclude Include="SolarSystem.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{89CE5068-8F65-48F0-9A37-9A0C806F5693}</ProjectGuid>
@@ -61,8 +63,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\FH\4.Semester\Computergrafik\glut-3.7.6-bin;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\FH\4.Semester\Computergrafik\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\glut-3.7.6-bin;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

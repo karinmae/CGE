@@ -15,11 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SolarSystem.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="..\earthmap1k.bmp">
       <Filter>Ressourcendateien</Filter>
     </Image>
@@ -58,7 +53,18 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SolarSystem.h">
+    <ClCompile Include="glm.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="SolarSystem.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="glm.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="SolarSystem.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
