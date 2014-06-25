@@ -63,8 +63,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\glut-3.7.6-bin;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\glut-3.7.6-bin;$(IncludePath)</IncludePath>
+    <LibraryPath>..\glut-3.7.6-bin;</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
