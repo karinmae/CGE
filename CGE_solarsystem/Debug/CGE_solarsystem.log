@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿Der Buildvorgang wurde am 25.06.2014 14:07:21 gestartet.
      1>Projekt "C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\CGE_solarsystem\CGE_solarsystem.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
@@ -8,7 +9,18 @@
          Debug\SolarSystem.obj
          CGE_solarsystem.vcxproj -> C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\Debug\CGE_solarsystem.exe
      1>Die Erstellung des Projekts "C:\Users\Jasmin\Documents\Visual Studio 2013\Projects\CGE_SolarSystem\CGE_solarsystem\CGE_solarsystem.vcxproj" ist abgeschlossen, Build Ziel(e).
+=======
+﻿Build started 25.06.2014 10:28:50.
+     1>Project "D:\FH\4.Semester\Computergrafik\CGE\CGE_solarsystem\CGE_solarsystem.vcxproj" on node 2 (Build target(s)).
+     1>Link:
+         CGE_solarsystem.vcxproj -> D:\FH\4.Semester\Computergrafik\CGE\Debug\CGE_solarsystem.exe
+     1>Done Building Project "D:\FH\4.Semester\Computergrafik\CGE\CGE_solarsystem\CGE_solarsystem.vcxproj" (Build target(s)).
+>>>>>>> e1752a8009fc6a4a9486e7228ce3b60b6750d8af
 
-Build erfolgreich.
+Build succeeded.
 
+<<<<<<< HEAD
 Verstrichene Zeit 00:00:01.29
+=======
+Time Elapsed 00:00:00.76
+>>>>>>> e1752a8009fc6a4a9486e7228ce3b60b6750d8af
