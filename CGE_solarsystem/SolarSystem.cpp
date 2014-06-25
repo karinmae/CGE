@@ -141,7 +141,7 @@ void RenderScene(void)
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1, 1, 1, 1);
-	GLfloat val = 6000.0f; // Größe der skybox
+	GLfloat val = 5000.0f; // Größe der skybox
 
 	// Texturen für das fordere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
@@ -640,8 +640,9 @@ void ChangeSize(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// Ansicht hat 45 Grad und liegt zwischen 1 und 6000
-	gluPerspective(45.0f, fAspect, 1.0, 6000.0);
+	// Ansicht hat 45 Grad und liegt zwischen 1 und 25000 
+	// (Merke: muss immer 5 Mal so groß wie die Textur der skybox sein)
+	gluPerspective(45.0f, fAspect, 1.0, 25000.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -905,6 +906,7 @@ void GenerateTextures(char *name, int i)
 		glBindTexture(GL_TEXTURE_2D, saturnRingsTexture);
 	}
 
+	// Diverse Textureinstellungen
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pix);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
