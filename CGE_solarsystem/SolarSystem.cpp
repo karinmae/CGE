@@ -13,11 +13,14 @@
 #include "glm.h"
 
 #define PI 3.1416
+// Umrechnung von Grad in Rad
+#define RAD(x) (((x)*M_PI)/180.)
 
+#pragma region variables
 int window;
 
 /* ----- Spaceship Variablen ---- */
-float x = 50, y = -150, z = -100, graus = 0;
+float xShipPosition = 50, yShipPosition = -150, zShipPosition = -100;
 int fps = 0, displayList = 0;
 
 GLfloat lightAmbShip[3] = { 0.1, 0.1, 0.1 };
@@ -30,8 +33,23 @@ int moving = 0;		// Flag = true, wenn sich die Maus bewegt
 int mouse_x = 0;	// x-Wert der Maus  
 int mouse_y = 0;	// x-Wert der Maus 
 
-GLfloat solarShipAngle = 0;
+GLfloat spaceShipAngleX = 0;
+GLfloat spaceShipAngleY = 0;
+GLfloat spaceShipAngleZ = 0;
+
+GLfloat spaceShipCenterX = 0;
+GLfloat spaceShipCenterY = 0;
+GLfloat spaceShipCenterZ = 0;
+
 int testShip = 0;
+
+// actual vector representing the camera's direction
+float lx = 0.0f, lz = -1.0f;
+// XZ position of the camera
+float x = 0.0f, z = 5.0f;
+
+// angle for rotating triangle
+float angle = 0.0f;
 
 /* ----- Lighting Variablen ---- */
 GLfloat  whiteLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -60,12 +78,11 @@ GLuint saturnRingsTexture;
 GLfloat fSunX = 0.0f;
 GLfloat fSunY = 0.0f;
 GLfloat fSunZ = -500.0f;
-GLfloat fCamX = 0.0f;
-GLfloat fCamY = 0.0f;
-GLfloat fCamZ = 0.0f;
 GLfloat fSunRotX = 0.0f;
 GLfloat fSunRotY = 0.0f;
 GLfloat fSunRotZ = 0.0f;
+
+#pragma endregion
 
 /* ----- Prototypen für die Funktionen ---- */
 void keyDown(unsigned char, int, int);
@@ -74,6 +91,7 @@ void GenerateTextures(char *, int);
 void InitialiseTextures(void);
 void mouse(int, int, int, int);
 void mouseMotion(int, int);
+void processSpecialKeys(int, int, int);
 
 /* ---- Sonnensystem wird gezeichnet ----- */
 void RenderScene(void)
@@ -98,6 +116,11 @@ void RenderScene(void)
 	// Matrix-Zustand speichern
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
+
+	// Bewegungssteuerung des Spaceship aus Sicht des Spaceship
+	gluLookAt(x, 1.0f, z,
+		x + lx, 1.0f, z + lz,
+		0.0f, 1.0f, 0.0f);
 
 	// Verschiebt die Szene auf Basis der Sonnenposition
 	glTranslatef(fSunX, fSunY, fSunZ);
@@ -147,55 +170,54 @@ void RenderScene(void)
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, -val, val);
-	glTexCoord2f(1, 0); glVertex3f(-val, -val, val);
-	glTexCoord2f(1, 1); glVertex3f(-val, val, val);
-	glTexCoord2f(0, 1); glVertex3f(val, val, val);
+	glTexCoord2f(2, 0); glVertex3f(-val,-val, val);
+	glTexCoord2f(2, 2); glVertex3f(-val, val, val);
+	glTexCoord2f(0, 2); glVertex3f(val, val, val);
 	glEnd();
 
 	// Texturen für das linke Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, -val, -val);
-	glTexCoord2f(1, 0); glVertex3f(val, -val, val);
-	glTexCoord2f(1, 1); glVertex3f(val, val, val);
-	glTexCoord2f(0, 1); glVertex3f(val, val, -val);
+	glTexCoord2f(2, 0); glVertex3f(val, -val, val);
+	glTexCoord2f(2, 2); glVertex3f(val, val, val);
+	glTexCoord2f(0, 2); glVertex3f(val, val, -val);
 	glEnd();
 
 	// Texturen für das hintere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, -val, -val);
-	glTexCoord2f(1, 0); glVertex3f(val, -val, -val);
-	glTexCoord2f(1, 1); glVertex3f(val, val, -val);
-	glTexCoord2f(0, 1); glVertex3f(-val, val, -val);
-
+	glTexCoord2f(2, 0); glVertex3f(val, -val, -val);
+	glTexCoord2f(2, 2); glVertex3f(val, val, -val);
+	glTexCoord2f(0, 2); glVertex3f(-val, val, -val);
 	glEnd();
 
 	// Texturen für das rechte Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, val, -val);
-	glTexCoord2f(1, 0); glVertex3f(-val, val, val);
-	glTexCoord2f(1, 1); glVertex3f(-val, -val, val);
-	glTexCoord2f(0, 1); glVertex3f(-val, -val, -val);
+	glTexCoord2f(2, 0); glVertex3f(-val, val, val);
+	glTexCoord2f(2, 2); glVertex3f(-val, -val, val);
+	glTexCoord2f(0, 2); glVertex3f(-val, -val, -val);
 	glEnd();
 
 	// Texturen für das obere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(val, val, -val);
-	glTexCoord2f(1, 0); glVertex3f(val, val, val);
-	glTexCoord2f(1, 1); glVertex3f(-val, val, val);
-	glTexCoord2f(0, 1); glVertex3f(-val, val, -val);
+	glTexCoord2f(2, 0); glVertex3f(val, val, val);
+	glTexCoord2f(2, 2); glVertex3f(-val, val, val);
+	glTexCoord2f(0, 2); glVertex3f(-val, val, -val);
 	glEnd();
 
 	// Texturen für das untere Quadrat
 	glBindTexture(GL_TEXTURE_2D, starsTexture);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex3f(-val, -val, -val);
-	glTexCoord2f(1, 0); glVertex3f(-val, -val, val);
-	glTexCoord2f(1, 1); glVertex3f(val, -val, val);
-	glTexCoord2f(0, 1); glVertex3f(val, -val, -val);
+	glTexCoord2f(2, 0); glVertex3f(-val, -val, val);
+	glTexCoord2f(2, 2); glVertex3f(val, -val, val);
+	glTexCoord2f(0, 2); glVertex3f(val, -val, -val);
 	glEnd();
 
 	glPopAttrib();
@@ -569,19 +591,18 @@ void RenderScene(void)
 	gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an
 		100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
 		0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt 
-
-	// Ligting für das Spaceship
+		
+	// Lighting für das Spaceship
 	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbShip);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffShip);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glTranslatef(x, y, z); // Position des Raumschiffes in der Skybox
-	//glRotatef(graus, 1.0, 0.0, 0.0);
+	glTranslatef(xShipPosition, yShipPosition, zShipPosition); // Position des Raumschiffes in der Skybox
 
 	// Spaceship-Rotation mit der Maus steuern
-	glRotatef(solarShipAngle, 0.0, 0.0, 1.0);
-	//glRotatef(solarShipAngle, 0.0, 1.0, 0.0);
-	//glRotatef(solarShipAngle, 1.0, 0.0, 0.0);
+	//glRotatef(spaceShipAngleZ, 0.0, 0.0, 1.0);
+	glRotatef(spaceShipAngleY, 0.0, 1.0, 0.0);
+	//glRotatef(spaceShipAngleX, 1.0, 0.0, 0.0);
 
 	glCallList(displayList);
 #pragma endregion
@@ -664,6 +685,9 @@ int main(int argc, char* argv[])
 	// Mausfunktionen
 	glutMouseFunc(mouse);
 	glutMotionFunc(mouseMotion);
+
+	// SpecialKey Funktion
+	glutSpecialFunc(processSpecialKeys);
 	
 	/* ----- Ship ----- */
 	spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
@@ -689,54 +713,42 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+/* ----- Steuerung der Szene auf Basis der Sonne ----- */
 #pragma region keyfunction
 void keyDown(unsigned char key, int x, int y)
 {
+	/*
 	// bewegt Kamera nach links
 	if (key == 'A' || key == 'a')
 	{
 		fSunX += 30.0f;
-		//fCamX += -30.0f;
-		/*
-		if (testShip == 0) {
-			solarShipAngle += 30.0f;
-			testShip = 1;
-		}
-		else {
-			solarShipAngle -= 30.0f;
-			testShip = 0;
-		}
-		*/
 	}
 	// bewegt Kamera nach rechts
 	if (key == 'D' || key == 'd')
 	{
 		fSunX += -30.0f;
-		//fCamX += 30.0f;
 	}
+	*/
 	// bewegt Kamera nach oben
-	if (key == 'W' || key == 'w')
+	if (key == 'Y' || key == 'y')
 	{
 		fSunY += -30.0f;
-		//fCamY += 30.0f;
 	}
 	// Bewegt Kamera nach unten
-	if (key == 'S' || key == 's')
+	if (key == 'X' || key == 'x')
 	{
 		fSunY += 30.0f;
-		//fCamY += -30.0f;
 	}
+	/*
 	// zoomt die Kamera raus
 	if (key == 'X' || key == 'x')
 	{
 		fSunZ += -30.0f;
-		//fCamZ += 30.0f;
 	}
 	// zoomt die Kamera rein
 	if (key == 'Z' || key == 'z')
 	{
 		fSunZ += 30.0f;
-		//fCamZ += -30.0f;
 	}
 	// rotiert die Kamera um die positive x-Achse 
 	if (key == 'J' || key == 'j')
@@ -768,7 +780,7 @@ void keyDown(unsigned char key, int x, int y)
 	{
 		fSunRotZ += 3.0f;
 	}
-
+	*/
 	// schließt das Programm mit ESC
 	if (key == 27)
 	{
@@ -779,6 +791,7 @@ void keyDown(unsigned char key, int x, int y)
 }
 #pragma endregion
 
+#pragma region bmpLoader
 unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 {
 	BITMAPFILEHEADER bmfh;
@@ -811,7 +824,9 @@ unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 	*wi = bmih.biWidth; *hi = bmih.biHeight;
 	return lpBitmapBits;
 }
+#pragma endregion
 
+#pragma region texturesInitialise
 void InitialiseTextures()
 {
 	// ruft die Funktion "GenerateTextures" auf um jede Textur zu laden mit Hilfe eines Index
@@ -829,7 +844,9 @@ void InitialiseTextures()
 	GenerateTextures("stars.bmp", 12);
 	GenerateTextures("saturnringmap.bmp", 13);
 }
+#pragma endregion
 
+#pragma region texturesGenerate
 // name: steht für den Filenamen der Texture
 // i: steht für den index-number, damit die Textur dem richtigen Planeten zugeordnet werden kann
 void GenerateTextures(char *name, int i)
@@ -917,7 +934,9 @@ void GenerateTextures(char *name, int i)
 	free(pix);
 	glDisable(GL_TEXTURE_2D);
 }
+#pragma endregion
 
+/* ----- Steuerung der Sicht auf das Raumschiff ------ */
 #pragma region mousefunction
 void mouse(int button, int state, int x, int y)
 {
@@ -945,12 +964,48 @@ void mouse(int button, int state, int x, int y)
 void mouseMotion(int x, int y) {
 
 	if (moving) { // Maustaste ist gedrückt
+	
+		//spaceShipAngleX = spaceShipAngleX + (y - mouse_y);
+		spaceShipAngleY = spaceShipAngleY + (x - mouse_x); // Drehung um das Raumschiff herum
 
-		solarShipAngle = solarShipAngle + (x - mouse_x);
+		//if (spaceShipAngleX > 360.0) spaceShipAngleX -= 360.0;
+		//else if (spaceShipAngleX < -360.0) spaceShipAngleX += 360.0;
+		if (spaceShipAngleY > 360.0) spaceShipAngleY -= 360.0;
+		else if (spaceShipAngleY < -360.0) spaceShipAngleY += 360.0;
 
 		mouse_x = x;
 		mouse_y = y;
 		glutPostRedisplay();
+	}
+}
+#pragma endregion
+
+/* ----- Steuerung des Raumschiffes mit Pfeiltasten ----- */
+#pragma region specialkeyfunktion
+void processSpecialKeys(int key, int xx, int yy)
+{
+
+	float fraction = 100.0f;
+
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		angle -= 0.10f;
+		lx = sin(angle);
+		lz = -cos(angle);
+		break;
+	case GLUT_KEY_RIGHT:
+		angle += 0.10f;
+		lx = sin(angle);
+		lz = -cos(angle);
+		break;
+	case GLUT_KEY_UP:
+		x += lx * fraction;
+		z += lz * fraction;
+		break;
+	case GLUT_KEY_DOWN:
+		x -= lx * fraction;
+		z -= lz * fraction;
+		break;
 	}
 }
 #pragma endregion
