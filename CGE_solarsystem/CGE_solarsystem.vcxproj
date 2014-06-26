@@ -71,13 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-<<<<<<< HEAD
     <IncludePath>..\glew\include;..\glut-3.7.6-bin;..\freeglut;..\glm;$(IncludePath)</IncludePath>
     <LibraryPath>..\freeglut;..\glm;..\glew\include;..\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
-=======
-    <IncludePath>..\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\lib;$(LibraryPath)</LibraryPath>
->>>>>>> ea98e003b1f830d56e21e1bbd0c800a5a63e20c3
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
