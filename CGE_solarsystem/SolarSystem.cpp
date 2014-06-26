@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+
 //#include <gl/glut.h>
 //#include <GL/glu.h>
 //#include <gl/GL.h>
+
 #include <math.h>
 
 //#include "glm.h"
@@ -773,6 +775,7 @@ int main(int argc, char* argv[])
 	/* ----- Ship ----- */
 	//spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
 	//spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
+
 
 	//displayList = glGenLists(1);
 	//	glNewList(displayList, GL_COMPILE);
