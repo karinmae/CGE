@@ -60,11 +60,12 @@ int filling = 1;
 obj_type object;
 
 // Absolute rotation values (0-359 degrees) and rotiation increments for each frame
-float rotation_x = 0, rotation_x_increment = 0.1f;
-float rotation_y = 0, rotation_y_increment = 0.05f;
-float rotation_z = 0, rotation_z_increment = 0.03f;
+float rotation_x = 200;
+float rotation_y = 0;
+float rotation_z = 0;
 
 glm::mat4 P;	//projection matrix;
+
 
 /* ----- Spaceship Variablen ---- */
 //float xShipPosition = 50, yShipPosition = -150, zShipPosition = -100;
@@ -89,6 +90,11 @@ GLfloat spaceShipCenterY = 0;
 GLfloat spaceShipCenterZ = 0;
 
 int testShip = 0;
+
+int flagLeft = 0;
+int flagRight = 0;
+int flagUp = 0;
+int flagDown = 0;
 
 // actual vector representing the camera's direction
 float lx = 0.0f, lz = -1.0f;
@@ -168,9 +174,9 @@ void RenderScene(void)
 	glPushMatrix();
 
 	// Bewegungssteuerung des Spaceship aus Sicht des Spaceship
-	gluLookAt(x, 1.0f, z,
-		x + lx, 1.0f, z + lz,
-		0.0f, 1.0f, 0.0f);
+	gluLookAt(x, 1.0f, z,		// Gibt die Position des Betrachters an
+		x + lx, 1.0f, z + lz,	// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
+		0.0f, 1.0f, 0.0f);		// Gibt die Richtung des Vektors an, der nach oben zeigt 
 
 	// Verschiebt die Szene auf Basis der Sonnenposition
 	glTranslatef(fSunX, fSunY, fSunZ);
@@ -661,7 +667,7 @@ void RenderScene(void)
 	GL_CHECK_ERRORS
 
 	//setup matrices
-	glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -300));
+	glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -100.0f, -300)); // Position des Raumschiffes in der Skybox
 	glm::mat4 Rx = glm::rotate(T, rotation_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 Ry = glm::rotate(Rx, rotation_y, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 MV = glm::rotate(Ry, rotation_z, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -810,11 +816,29 @@ void keyDown(unsigned char key, int x, int y)
 	if (key == 'Y' || key == 'y')
 	{
 		fSunY += -30.0f;
+		if (flagDown == 1) {
+			rotation_x -= 200.0f;
+			flagUp = 1;
+			flagDown = 0;
+		}
+		if (flagUp == 0) {
+			rotation_x -= 100.0f;
+			flagUp = 1;
+		}
 	}
 	// Bewegt Kamera nach unten
 	if (key == 'X' || key == 'x')
 	{
 		fSunY += 30.0f;
+		if (flagUp == 1) {
+			rotation_x += 200.0f;
+			flagDown = 1;
+			flagUp = 0;
+		}
+		if (flagDown == 0) {
+			rotation_x += 100.0f;
+			flagDown = 1;
+		}
 	}
 	/*
 	// zoomt die Kamera raus
@@ -916,7 +940,7 @@ void InitialiseTextures()
 	GenerateTextures("../CGE_solarsystem/sunmap.bmp", 2);
 	GenerateTextures("../CGE_solarsystem/mercurymap.bmp", 3);
 	GenerateTextures("../CGE_solarsystem/venusmap.bmp", 4);
-	GenerateTextures("../CGE_solarsystem/moon.bmp", 5);
+	//GenerateTextures("../CGE_solarsystem/moon.bmp", 5);
 	GenerateTextures("../CGE_solarsystem/marsmap1k.bmp", 6);
 	GenerateTextures("../CGE_solarsystem/jupitermap.bmp", 7);
 	GenerateTextures("../CGE_solarsystem/saturnmap.bmp", 8);
@@ -1074,23 +1098,87 @@ void processSpecialKeys(int key, int xx, int yy)
 		angle -= 0.10f;
 		lx = sin(angle);
 		lz = -cos(angle);
+		if (flagRight == 1) {
+			rotation_z -= 200.0f;
+			flagLeft = 1;
+			flagRight = 0;
+		}
+		if (flagLeft == 0) {
+			rotation_z -= 100.0f;
+			flagLeft = 1;
+		}
 		break;
 	case GLUT_KEY_RIGHT:
 		angle += 0.10f;
 		lx = sin(angle);
 		lz = -cos(angle);
+		if (flagLeft == 1) {
+			rotation_z += 200.0f;
+			flagRight = 1;
+			flagLeft = 0;
+		}
+		if (flagRight == 0) {
+			rotation_z += 100.0f;
+			flagRight = 1;
+		}
 		break;
 	case GLUT_KEY_UP:
 		x += lx * fraction;
 		z += lz * fraction;
+		if (flagLeft == 1) {
+			rotation_z += 100.0f;
+			flagLeft = 0;
+		}
+		if (flagRight == 1) {
+			rotation_z -= 100.0f;
+			flagRight = 0;
+		}
+		if (flagUp == 1) {
+			rotation_x += 100.0f;
+			flagUp = 0;
+		}
+		if (flagDown == 1) {
+			rotation_x -= 100.0f;
+			flagDown = 0;
+		}
 		break;
 	case GLUT_KEY_DOWN:
 		x -= lx * fraction;
 		z -= lz * fraction;
+		if (flagLeft == 1) {
+			rotation_z += 100.0f;
+			flagLeft = 0;
+		}
+		if (flagRight == 1) {
+			rotation_z -= 100.0f;
+			flagRight = 0;
+		}
+		if (flagUp == 1) {
+			rotation_x += 100.0f;
+			flagUp = 0;
+		}
+		if (flagDown == 1) {
+			rotation_x -= 100.0f;
+			flagDown = 0;
+		}
 		break;
 	}
 }
 #pragma endregion
+
+
+/*
+* ---------------- www.spacesimulator.net --------------
+*   ---- Space simulators and 3d engine tutorials ----
+*
+* Original Author: Damiano Vitulli
+* Porting to OpenGL3.3: Movania Muhammad Mobeen
+* Shaders Functions: Movania Muhammad Mobeen
+*
+* This program is released under the BSD licence
+* By using this program you agree to licence terms on spacesimulator.net copyright page
+*
+*/
 
 #pragma region DreiDModelLoader
 void InitShaders(void)
