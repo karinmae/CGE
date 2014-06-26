@@ -1,32 +1,77 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define GLM_FORCE_RADIANS 
 
 #include "SolarSystem.h"
-
 #include "windows.h"
+
+#include <gl/glew.h>
+#include <freeglut.h>
+
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
-#include <gl/glut.h>
-#include <GL/glu.h>
-#include <gl/GL.h>
+//#include <gl/glut.h>
+//#include <GL/glu.h>
+//#include <gl/GL.h>
 #include <math.h>
 
-#include "glm.h"
+//#include "glm.h"
+
+#include "GLSLShader.h"
+#include "tutorial4.h"
+#include "texture.h"
+#include "3dsloader.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <cassert>
+
+#pragma comment(lib, "glew32.lib")
+ /* Pragma ist präprozessor / Compiler Abrakadabra, pragma's sind die Zaubersprüche des verzweifelten C-Programmierers 
+ die man aus obskuren Quellen mit einem Stoßgebet zu kernighan und ritchie 
+ in seinen Code einfügt und dann hoffentlich dazu führen dass alles plötzlich komplimiert^^*/
+
+#define GL_CHECK_ERRORS assert(glGetError()== GL_NO_ERROR);
 
 #define PI 3.1416
 // Umrechnung von Grad in Rad
 #define RAD(x) (((x)*M_PI)/180.)
 
 #pragma region variables
+
+using namespace std;
+
 int window;
+/* ----- 3d-Model-Loader Variablen ------ */
+int screen_width = 640;
+int screen_height = 480;
+
+GLuint vboVerticesID, vboTexCoordID, vboIndicesID, vaoID;
+
+GLsizei stride = sizeof(GLfloat)* 3;
+GLSLShader shader;
+
+int filling = 1;
+
+//Now the object is generic, the cube has annoyed us a little bit, or not?
+obj_type object;
+
+// Absolute rotation values (0-359 degrees) and rotiation increments for each frame
+float rotation_x = 0, rotation_x_increment = 0.1f;
+float rotation_y = 0, rotation_y_increment = 0.05f;
+float rotation_z = 0, rotation_z_increment = 0.03f;
+
+glm::mat4 P;	//projection matrix;
 
 /* ----- Spaceship Variablen ---- */
-float xShipPosition = 50, yShipPosition = -150, zShipPosition = -100;
-int fps = 0, displayList = 0;
-
-GLfloat lightAmbShip[3] = { 0.1, 0.1, 0.1 };
-GLfloat lightDiffShip[3] = { 1.0, 1.0, 1.0 };
-
-GLMmodel* spaceship;
+//float xShipPosition = 50, yShipPosition = -150, zShipPosition = -100;
+//int fps = 0, displayList = 0;
+//
+//GLfloat lightAmbShip[3] = { 0.1, 0.1, 0.1 };
+//GLfloat lightDiffShip[3] = { 1.0, 1.0, 1.0 };
+//
+//GLMmodel* spaceship;
 
 /* ----- Spaceship Bewegungsvariablen ----- */
 int moving = 0;		// Flag = true, wenn sich die Maus bewegt 
@@ -47,7 +92,6 @@ int testShip = 0;
 float lx = 0.0f, lz = -1.0f;
 // XZ position of the camera
 float x = 0.0f, z = 5.0f;
-
 // angle for rotating triangle
 float angle = 0.0f;
 
@@ -92,6 +136,10 @@ void InitialiseTextures(void);
 void mouse(int, int, int, int);
 void mouseMotion(int, int);
 void processSpecialKeys(int, int, int);
+// 3d-Model-Loader Funktionen
+void InitShaders(void);
+void InitVAO();
+void InitGL();
 
 /* ---- Sonnensystem wird gezeichnet ----- */
 void RenderScene(void)
@@ -405,7 +453,7 @@ void RenderScene(void)
 	glRotatef(fSaturnRingRot, 0.0f, 0.0f, 1.0f);
 	glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
 	glRotatef(-90.0, 1.0, 0.0, 0.0);
-	glScalef(1, 1, .02);
+	glScalef(1, 1, 0.02f);
 	glRotatef(fSaturnRingRot * 3, 0.0f, 0.0f, 1.0f);
 	gluSphere(pObj, 72.0f * 2, 48, 48); // Saturnringe zeichnen
 
@@ -586,25 +634,43 @@ void RenderScene(void)
 
 #pragma region ship
 	/* ----- Ship ----- */
-	glLoadIdentity();
+	//glLoadIdentity();
 
-	gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an
-		100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
-		0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt 
-		
-	// Lighting für das Spaceship
-	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbShip);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffShip);
+	//gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an
+	//	100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
+	//	0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt 
+	//	
+	//// Lighting für das Spaceship
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbShip);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffShip);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glTranslatef(xShipPosition, yShipPosition, zShipPosition); // Position des Raumschiffes in der Skybox
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glTranslatef(xShipPosition, yShipPosition, zShipPosition); // Position des Raumschiffes in der Skybox
 
-	// Spaceship-Rotation mit der Maus steuern
-	//glRotatef(spaceShipAngleZ, 0.0, 0.0, 1.0);
-	glRotatef(spaceShipAngleY, 0.0, 1.0, 0.0);
-	//glRotatef(spaceShipAngleX, 1.0, 0.0, 0.0);
+	//// Spaceship-Rotation mit der Maus steuern
+	////glRotatef(spaceShipAngleZ, 0.0, 0.0, 1.0);
+	//glRotatef(spaceShipAngleY, 0.0, 1.0, 0.0);
+	////glRotatef(spaceShipAngleX, 1.0, 0.0, 0.0);
 
-	glCallList(displayList);
+	//glCallList(displayList);
+#pragma endregion
+
+#pragma region DreiD-Model
+	GL_CHECK_ERRORS
+
+	//setup matrices
+	glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -300));
+	glm::mat4 Rx = glm::rotate(T, rotation_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 Ry = glm::rotate(Rx, rotation_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 MV = glm::rotate(Ry, rotation_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 MVP = P*MV;
+
+	glBindVertexArray(vaoID);
+	shader.Use();
+	glUniformMatrix4fv(shader("MVP"), 1, GL_FALSE, glm::value_ptr(MVP));
+	glDrawElements(GL_TRIANGLES, object.polygons_qty * 3, GL_UNSIGNED_SHORT, 0);
+	shader.UnUse();
+	glBindVertexArray(0);
 #pragma endregion
 
 	// Sonnensystem anzeigen
@@ -655,6 +721,9 @@ void ChangeSize(int w, int h)
 	// Viewport auf Windows-Dimensionen festlegen
 	glViewport(0, 0, w, h);
 
+	//setup the projection matrix
+	P = glm::perspective(45.0f, (GLfloat)w / h, 10.f, 10000.f);
+
 	// Window-Verhältnis berechnen
 	fAspect = (GLfloat)w / (GLfloat)h;
 
@@ -676,6 +745,18 @@ int main(int argc, char* argv[])
 	glutInitWindowSize(1000, 600); // Window-Größe
 	window = glutCreateWindow("SolarSystem"); // Window-Name
 
+	// Flag, welches sicherstellt, dass die Texturen nur einmal geladen werden
+	if (texturesCreated == false)
+	{
+		InitialiseTextures();
+		texturesCreated = true;
+	}
+
+	// benötigt für 3d-Model-Loader
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	InitGL();
+
 	glutReshapeFunc(ChangeSize);
 	glutDisplayFunc(RenderScene);
 	glutKeyboardFunc(keyDown); // wird aufgerufen, wenn eine Taste gedrückt wird	
@@ -690,23 +771,16 @@ int main(int argc, char* argv[])
 	glutSpecialFunc(processSpecialKeys);
 	
 	/* ----- Ship ----- */
-	spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
-	spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
+	//spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
+	//spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
 
-	displayList = glGenLists(1);
-		glNewList(displayList, GL_COMPILE);
-		glmFacetNormals(spaceship);
-		glmVertexNormals(spaceship, 90.0);
-		glmLinearTexture(spaceship);
-		glmDraw(spaceship, GLM_SMOOTH);
-	glEndList();
-
-	// Flag, welches sicherstellt, dass die Texturen nur einmal geladen werden
-	if (texturesCreated == false)
-	{
-		InitialiseTextures();
-		texturesCreated = true;
-	}
+	//displayList = glGenLists(1);
+	//	glNewList(displayList, GL_COMPILE);
+	//	glmFacetNormals(spaceship);
+	//	glmVertexNormals(spaceship, 90.0);
+	//	glmLinearTexture(spaceship);
+	//	glmDraw(spaceship, GLM_SMOOTH);
+	//glEndList();
 
 	glutMainLoop();
 
@@ -785,6 +859,11 @@ void keyDown(unsigned char key, int x, int y)
 	if (key == 27)
 	{
 		glutDestroyWindow(window);
+		glDeleteTextures(1, &object.id_texture);
+		glDeleteBuffers(1, &vboVerticesID);
+		glDeleteBuffers(1, &vboTexCoordID);
+		glDeleteBuffers(1, &vboIndicesID);
+		glDeleteVertexArrays(1, &vaoID);
 		exit(0);
 	}
 
@@ -830,19 +909,19 @@ unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 void InitialiseTextures()
 {
 	// ruft die Funktion "GenerateTextures" auf um jede Textur zu laden mit Hilfe eines Index
-	GenerateTextures("earthmap1k.bmp", 1);
-	GenerateTextures("sunmap.bmp", 2);
-	GenerateTextures("mercurymap.bmp", 3);
-	GenerateTextures("venusmap.bmp", 4);
-	GenerateTextures("moon.bmp", 5);
-	GenerateTextures("marsmap1k.bmp", 6);
-	GenerateTextures("jupitermap.bmp", 7);
-	GenerateTextures("saturnmap.bmp", 8);
-	GenerateTextures("uranusmap.bmp", 9);
-	GenerateTextures("neptunemap.bmp", 10);
-	GenerateTextures("plutomap2k.bmp", 11);
-	GenerateTextures("stars.bmp", 12);
-	GenerateTextures("saturnringmap.bmp", 13);
+	GenerateTextures("../CGE_solarsystem/earthmap1k.bmp", 1);
+	GenerateTextures("../CGE_solarsystem/sunmap.bmp", 2);
+	GenerateTextures("../CGE_solarsystem/mercurymap.bmp", 3);
+	GenerateTextures("../CGE_solarsystem/venusmap.bmp", 4);
+	GenerateTextures("../CGE_solarsystem/moon.bmp", 5);
+	GenerateTextures("../CGE_solarsystem/marsmap1k.bmp", 6);
+	GenerateTextures("../CGE_solarsystem/jupitermap.bmp", 7);
+	GenerateTextures("../CGE_solarsystem/saturnmap.bmp", 8);
+	GenerateTextures("../CGE_solarsystem/uranusmap.bmp", 9);
+	GenerateTextures("../CGE_solarsystem/neptunemap.bmp", 10);
+	GenerateTextures("../CGE_solarsystem/plutomap2k.bmp", 11);
+	GenerateTextures("../CGE_solarsystem/stars.bmp", 12);
+	GenerateTextures("../CGE_solarsystem/saturnringmap.bmp", 13);
 }
 #pragma endregion
 
@@ -1007,5 +1086,79 @@ void processSpecialKeys(int key, int xx, int yy)
 		z -= lz * fraction;
 		break;
 	}
+}
+#pragma endregion
+
+#pragma region DreiDModelLoader
+void InitShaders(void)
+{
+	shader.LoadFromFile(GL_VERTEX_SHADER, "../CGE_solarsystem/shader.vert");
+	shader.LoadFromFile(GL_FRAGMENT_SHADER, "../CGE_solarsystem/shader.frag");
+	shader.CreateAndLinkProgram();
+	shader.Use();
+	shader.AddAttribute("vVertex");
+	shader.AddAttribute("vUV");
+	shader.AddUniform("MVP");
+	shader.AddUniform("textureMap");
+	glUniform1i(shader("textureMap"), 0);
+	shader.UnUse();
+
+	GL_CHECK_ERRORS
+}
+
+void InitVAO() {
+	GL_CHECK_ERRORS
+		//Create vao and vbo stuff
+		glGenVertexArrays(1, &vaoID);
+	glGenBuffers(1, &vboVerticesID);
+	glGenBuffers(1, &vboTexCoordID);
+	glGenBuffers(1, &vboIndicesID);
+
+	GL_CHECK_ERRORS
+
+		glBindVertexArray(vaoID);
+	glBindBuffer(GL_ARRAY_BUFFER, vboVerticesID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)* 3 * object.vertices_qty, &object.vertex[0], GL_STATIC_DRAW);
+	GL_CHECK_ERRORS
+		glEnableVertexAttribArray(shader["vVertex"]);
+	glVertexAttribPointer(shader["vVertex"], 3, GL_FLOAT, GL_FALSE, stride, 0);
+	GL_CHECK_ERRORS
+		glBindBuffer(GL_ARRAY_BUFFER, vboTexCoordID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)* 2 * object.vertices_qty, &object.mapcoord[0], GL_STATIC_DRAW);
+	GL_CHECK_ERRORS
+		glEnableVertexAttribArray(shader["vUV"]);
+	glVertexAttribPointer(shader["vUV"], 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat)* 2, 0);
+	GL_CHECK_ERRORS
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndicesID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort)* 3 * object.polygons_qty, &object.polygon[0], GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	GL_CHECK_ERRORS
+}
+
+void InitGL() {
+	glGetError();
+	GL_CHECK_ERRORS
+		glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
+	GL_CHECK_ERRORS
+
+	Load3DS(&object, "../CGE_solarsystem/shipA_3DS.3ds");
+	InitShaders();
+	InitVAO();
+
+	glEnable(GL_DEPTH_TEST); // We enable the depth test (also called z buffer)
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Polygon rasterization mode (polygon filled)	
+	GL_CHECK_ERRORS
+
+	object.id_texture = LoadBitmap("../CGE_solarsystem/spaceshiptexture.bmp"); // The Function LoadBitmap() return the current texture ID
+
+	// If the last function returns -1 it means the file was not found so we exit from the program
+	if (object.id_texture == -1)
+	{
+		cerr << "Image file: texture1.bmp not found" << endl;
+		exit(EXIT_FAILURE);
+	}
+	GL_CHECK_ERRORS
 }
 #pragma endregion
