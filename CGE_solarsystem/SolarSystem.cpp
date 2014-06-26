@@ -5,7 +5,7 @@
 #include "windows.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <gl/glut.h>
+#include <glut.h>
 #include <GL/glu.h>
 #include <gl/GL.h>
 #include <math.h>
@@ -691,7 +691,7 @@ int main(int argc, char* argv[])
 	
 	/* ----- Ship ----- */
 	spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
-	spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
+	spaceship = glmReadOBJ("../CGE_solarsystem/ship.obj"); // Laden des Ship-Modell
 
 	displayList = glGenLists(1);
 		glNewList(displayList, GL_COMPILE);
@@ -830,19 +830,19 @@ unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 void InitialiseTextures()
 {
 	// ruft die Funktion "GenerateTextures" auf um jede Textur zu laden mit Hilfe eines Index
-	GenerateTextures("earthmap1k.bmp", 1);
-	GenerateTextures("sunmap.bmp", 2);
-	GenerateTextures("mercurymap.bmp", 3);
-	GenerateTextures("venusmap.bmp", 4);
-	GenerateTextures("moon.bmp", 5);
-	GenerateTextures("marsmap1k.bmp", 6);
-	GenerateTextures("jupitermap.bmp", 7);
-	GenerateTextures("saturnmap.bmp", 8);
-	GenerateTextures("uranusmap.bmp", 9);
-	GenerateTextures("neptunemap.bmp", 10);
-	GenerateTextures("plutomap2k.bmp", 11);
-	GenerateTextures("stars.bmp", 12);
-	GenerateTextures("saturnringmap.bmp", 13);
+	GenerateTextures("../CGE_solarsystem/earthmap1k.bmp", 1);
+	GenerateTextures("../CGE_solarsystem/sunmap.bmp", 2);
+	GenerateTextures("../CGE_solarsystem/mercurymap.bmp", 3);
+	GenerateTextures("../CGE_solarsystem/venusmap.bmp", 4);
+	GenerateTextures("../CGE_solarsystem/moon.bmp", 5);
+	GenerateTextures("../CGE_solarsystem/marsmap1k.bmp", 6);
+	GenerateTextures("../CGE_solarsystem/jupitermap.bmp", 7);
+	GenerateTextures("../CGE_solarsystem/saturnmap.bmp", 8);
+	GenerateTextures("../CGE_solarsystem/uranusmap.bmp", 9);
+	GenerateTextures("../CGE_solarsystem/neptunemap.bmp", 10);
+	GenerateTextures("../CGE_solarsystem/plutomap2k.bmp", 11);
+	GenerateTextures("../CGE_solarsystem/stars.bmp", 12);
+	GenerateTextures("../CGE_solarsystem/saturnringmap.bmp", 13);
 }
 #pragma endregion
 
