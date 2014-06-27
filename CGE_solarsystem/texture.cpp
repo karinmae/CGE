@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <windows.h>
 #define GLM_FORCE_RADIANS 
-#include <GL/glew.h>
+#include <glew.h>
 #include "texture.h"
 
 

@@ -28,7 +28,6 @@
     <ClCompile Include="3dsloader.cpp" />
     <ClCompile Include="glm.cpp" />
     <ClCompile Include="GLSLShader.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="SolarSystem.cpp" />
     <ClCompile Include="texture.cpp" />
   </ItemGroup>
@@ -71,8 +70,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\glew\include;..\glut-3.7.6-bin;..\freeglut;..\glm;$(IncludePath)</IncludePath>
-    <LibraryPath>..\freeglut;..\glm;..\glew\include;..\glut-3.7.6-bin;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -91,7 +90,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\glew\lib;..\freeglut\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -4,7 +4,7 @@
 #include "SolarSystem.h"
 #include "windows.h"
 
-#include <gl/glew.h>
+#include <glew.h>
 #include <freeglut.h>
 
 #include <stdio.h>
@@ -24,9 +24,9 @@
 #include "texture.h"
 #include "3dsloader.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 #include <cassert>
 
 #pragma comment(lib, "glew32.lib")
