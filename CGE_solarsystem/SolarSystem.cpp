@@ -1,8 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define GLM_FORCE_RADIANS 
 
-#include "SolarSystem.h"
 #include "windows.h"
+#include "SolarSystem.h"
+#include "GLSLShader.h"
+#include "tutorial4.h"
+#include "texture.h"
+#include "3dsloader.h"
 
 #include <glew.h>
 #include <freeglut.h>
@@ -10,19 +14,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
-
-//#include <gl/glut.h>
-//#include <GL/glu.h>
-//#include <gl/GL.h>
-
 #include <math.h>
-
-//#include "glm.h"
-
-#include "GLSLShader.h"
-#include "tutorial4.h"
-#include "texture.h"
-#include "3dsloader.h"
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -30,21 +22,19 @@
 #include <cassert>
 
 #pragma comment(lib, "glew32.lib")
- /* Pragma ist präprozessor / Compiler Abrakadabra, pragma's sind die Zaubersprüche des verzweifelten C-Programmierers 
- die man aus obskuren Quellen mit einem Stoßgebet zu kernighan und ritchie 
- in seinen Code einfügt und dann hoffentlich dazu führen dass alles plötzlich komplimiert^^*/
+ /* Pragma ist Präprozessor / Compiler Abrakadabra, pragma's sind die Zaubersprüche des verzweifelten C-Programmierers 
+ die man aus obskuren Quellen mit einem Stoßgebet zu Kernighan und Ritchie 
+ in seinen Code einfügt und die dann hoffentlich dazu führen dass alles plötzlich komprimiert ^^ */
 
 #define GL_CHECK_ERRORS assert(glGetError()== GL_NO_ERROR);
 
-#define PI 3.1416
-// Umrechnung von Grad in Rad
-#define RAD(x) (((x)*M_PI)/180.)
-
-#pragma region variables
+#define PI 3.1416d
 
 using namespace std;
 
+#pragma region variables
 int window;
+
 /* ----- 3d-Model-Loader Variablen ------ */
 int screen_width = 640;
 int screen_height = 480;
@@ -56,51 +46,27 @@ GLSLShader shader;
 
 int filling = 1;
 
-//Now the object is generic, the cube has annoyed us a little bit, or not?
 obj_type object;
 
-// Absolute rotation values (0-359 degrees) and rotiation increments for each frame
+// Spaceship Rotationsvariablen
 float rotation_x = 200;
 float rotation_y = 0;
 float rotation_z = 0;
 
-glm::mat4 P;	//projection matrix;
-
-
-/* ----- Spaceship Variablen ---- */
-//float xShipPosition = 50, yShipPosition = -150, zShipPosition = -100;
-//int fps = 0, displayList = 0;
-//
-//GLfloat lightAmbShip[3] = { 0.1, 0.1, 0.1 };
-//GLfloat lightDiffShip[3] = { 1.0, 1.0, 1.0 };
-//
-//GLMmodel* spaceship;
+glm::mat4 P; // Projektions-Matrix
 
 /* ----- Spaceship Bewegungsvariablen ----- */
-int moving = 0;		// Flag = true, wenn sich die Maus bewegt 
-int mouse_x = 0;	// x-Wert der Maus  
-int mouse_y = 0;	// x-Wert der Maus 
-
-GLfloat spaceShipAngleX = 0;
-GLfloat spaceShipAngleY = 0;
-GLfloat spaceShipAngleZ = 0;
-
-GLfloat spaceShipCenterX = 0;
-GLfloat spaceShipCenterY = 0;
-GLfloat spaceShipCenterZ = 0;
-
-int testShip = 0;
-
+// Flags um festzustellen in welche Richtung das Raumschiff gerade schaut
 int flagLeft = 0;
 int flagRight = 0;
 int flagUp = 0;
 int flagDown = 0;
 
-// actual vector representing the camera's direction
+// Basisvektor der die Kamera Richtung repräsentiert 
 float lx = 0.0f, lz = -1.0f;
-// XZ position of the camera
+// x und z Position der Kamera
 float x = 0.0f, z = 5.0f;
-// angle for rotating triangle
+// Betrachtungswinklel für das Rotationsdreieck
 float angle = 0.0f;
 
 /* ----- Lighting Variablen ---- */
@@ -137,13 +103,13 @@ GLfloat fSunRotZ = 0.0f;
 #pragma endregion
 
 /* ----- Prototypen für die Funktionen ---- */
-void keyDown(unsigned char, int, int);
 unsigned char *LoadBmp(char *fn, int *wi, int *hi);
 void GenerateTextures(char *, int);
 void InitialiseTextures(void);
-void mouse(int, int, int, int);
-void mouseMotion(int, int);
+
+void keyDown(unsigned char, int, int);
 void processSpecialKeys(int, int, int);
+
 // 3d-Model-Loader Funktionen
 void InitShaders(void);
 void InitVAO();
@@ -640,33 +606,10 @@ void RenderScene(void)
 	glPopMatrix();
 #pragma endregion
 
-#pragma region ship
-	/* ----- Ship ----- */
-	//glLoadIdentity();
-
-	//gluLookAt(200.0, 200.0, 200.0,	// Gibt die Position des Betrachters an
-	//	100.0, 0.0, -150.0,			// Gibt die Position des Refernenzpunktes an, auf den "geblickt" wird
-	//	0.0f, 1.0f, 0.0f);			// Gibt die Richtung des Vektors an, der nach oben zeigt 
-	//	
-	//// Lighting für das Spaceship
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbShip);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffShip);
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glTranslatef(xShipPosition, yShipPosition, zShipPosition); // Position des Raumschiffes in der Skybox
-
-	//// Spaceship-Rotation mit der Maus steuern
-	////glRotatef(spaceShipAngleZ, 0.0, 0.0, 1.0);
-	//glRotatef(spaceShipAngleY, 0.0, 1.0, 0.0);
-	////glRotatef(spaceShipAngleX, 1.0, 0.0, 0.0);
-
-	//glCallList(displayList);
-#pragma endregion
-
 #pragma region DreiD-Model
 	GL_CHECK_ERRORS
 
-	//setup matrices
+	// Matrizen
 	glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -100.0f, -300)); // Position des Raumschiffes in der Skybox
 	glm::mat4 Rx = glm::rotate(T, rotation_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 Ry = glm::rotate(Rx, rotation_y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -760,69 +703,38 @@ int main(int argc, char* argv[])
 		texturesCreated = true;
 	}
 
-	// benötigt für 3d-Model-Loader
+	// benötigt für 3d-Model-Loader (Spaceship)
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	InitGL();
 
 	glutReshapeFunc(ChangeSize);
 	glutDisplayFunc(RenderScene);
+	glutSpecialFunc(processSpecialKeys); // SpecialKey Funktion
 	glutKeyboardFunc(keyDown); // wird aufgerufen, wenn eine Taste gedrückt wird	
 	glutTimerFunc(250, TimerFunc, 1);
 	SetupRC();
-
-	// Mausfunktionen
-	glutMouseFunc(mouse);
-	glutMotionFunc(mouseMotion);
-
-	// SpecialKey Funktion
-	glutSpecialFunc(processSpecialKeys);
-	
-	/* ----- Ship ----- */
-	//spaceship = (GLMmodel*)malloc(sizeof(GLMmodel));
-	//spaceship = glmReadOBJ("ship.obj"); // Laden des Ship-Modell
-
-
-	//displayList = glGenLists(1);
-	//	glNewList(displayList, GL_COMPILE);
-	//	glmFacetNormals(spaceship);
-	//	glmVertexNormals(spaceship, 90.0);
-	//	glmLinearTexture(spaceship);
-	//	glmDraw(spaceship, GLM_SMOOTH);
-	//glEndList();
 
 	glutMainLoop();
 
 	return 0;
 }
 
-/* ----- Steuerung der Szene auf Basis der Sonne ----- */
+/* ----- Steuerung mittels normale Key-Tasten ----- */
 #pragma region keyfunction
 void keyDown(unsigned char key, int x, int y)
 {
-	/*
-	// bewegt Kamera nach links
-	if (key == 'A' || key == 'a')
-	{
-		fSunX += 30.0f;
-	}
-	// bewegt Kamera nach rechts
-	if (key == 'D' || key == 'd')
-	{
-		fSunX += -30.0f;
-	}
-	*/
 	// bewegt Kamera nach oben
 	if (key == 'Y' || key == 'y')
 	{
 		fSunY += -30.0f;
 		if (flagDown == 1) {
-			rotation_x -= 200.0f;
+			rotation_x -= 200.0f; // doppelt, da Rauschmiff bereits nach unten schaut
 			flagUp = 1;
 			flagDown = 0;
 		}
 		if (flagUp == 0) {
-			rotation_x -= 100.0f;
+			rotation_x -= 100.0f; // lässt Raumschiff nach oben schauen
 			flagUp = 1;
 		}
 	}
@@ -831,61 +743,21 @@ void keyDown(unsigned char key, int x, int y)
 	{
 		fSunY += 30.0f;
 		if (flagUp == 1) {
-			rotation_x += 200.0f;
+			rotation_x += 200.0f; // doppelt, da Rauschmiff bereits nach oben schaut
 			flagDown = 1;
 			flagUp = 0;
 		}
 		if (flagDown == 0) {
-			rotation_x += 100.0f;
+			rotation_x += 100.0f; // lässt Raumschiff nach unten schauen
 			flagDown = 1;
 		}
 	}
-	/*
-	// zoomt die Kamera raus
-	if (key == 'X' || key == 'x')
-	{
-		fSunZ += -30.0f;
-	}
-	// zoomt die Kamera rein
-	if (key == 'Z' || key == 'z')
-	{
-		fSunZ += 30.0f;
-	}
-	// rotiert die Kamera um die positive x-Achse 
-	if (key == 'J' || key == 'j')
-	{
-		fSunRotY += 3.0f;
-	}
-	// rotiert die Kamera um die negative x-Achse 
-	if (key == 'L' || key == 'l')
-	{
-		fSunRotY += -3.0f;
-	}
-	// rotiert die Kamera um die negative y-Achse 
-	if (key == 'I' || key == 'i')
-	{
-		fSunRotX += 3.0f;
-	}
-	// rotiert die Kamera um die positive y-Achse 
-	if (key == 'K' || key == 'k')
-	{
-		fSunRotX += -3.0f;
-	}
-	// rotiert die Kamera um die negative z-Achse
-	if (key == 'M' || key == 'm')
-	{
-		fSunRotZ += -3.0f;
-	}
-	// rotiert die Kamera um die positive z-Achse
-	if (key == 'N' || key == 'n')
-	{
-		fSunRotZ += 3.0f;
-	}
-	*/
+
 	// schließt das Programm mit ESC
 	if (key == 27)
 	{
 		glutDestroyWindow(window);
+		// Aufräumarbeiten
 		glDeleteTextures(1, &object.id_texture);
 		glDeleteBuffers(1, &vboVerticesID);
 		glDeleteBuffers(1, &vboTexCoordID);
@@ -897,6 +769,7 @@ void keyDown(unsigned char key, int x, int y)
 }
 #pragma endregion
 
+/* ----- BMP Loader ------ */
 #pragma region bmpLoader
 unsigned char *LoadBmp(char *fn, int *wi, int *hi)
 {
@@ -1042,50 +915,6 @@ void GenerateTextures(char *name, int i)
 }
 #pragma endregion
 
-/* ----- Steuerung der Sicht auf das Raumschiff ------ */
-#pragma region mousefunction
-void mouse(int button, int state, int x, int y)
-{
-	switch (button) {
-	case GLUT_LEFT_BUTTON: 
-		if (state == GLUT_DOWN){ // Maustaste gedrückt
-			moving = 1;
-			// Maus-Koordinaten
-			mouse_x = x;
-			mouse_y = y;
-
-		}
-		else if (state == GLUT_UP){ // Maustaste nicht gedrückt
-			moving = 0;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	glutPostRedisplay();
-}
-
-void mouseMotion(int x, int y) {
-
-	if (moving) { // Maustaste ist gedrückt
-	
-		//spaceShipAngleX = spaceShipAngleX + (y - mouse_y);
-		spaceShipAngleY = spaceShipAngleY + (x - mouse_x); // Drehung um das Raumschiff herum
-
-		//if (spaceShipAngleX > 360.0) spaceShipAngleX -= 360.0;
-		//else if (spaceShipAngleX < -360.0) spaceShipAngleX += 360.0;
-		if (spaceShipAngleY > 360.0) spaceShipAngleY -= 360.0;
-		else if (spaceShipAngleY < -360.0) spaceShipAngleY += 360.0;
-
-		mouse_x = x;
-		mouse_y = y;
-		glutPostRedisplay();
-	}
-}
-#pragma endregion
-
 /* ----- Steuerung des Raumschiffes mit Pfeiltasten ----- */
 #pragma region specialkeyfunktion
 void processSpecialKeys(int key, int xx, int yy)
@@ -1099,12 +928,12 @@ void processSpecialKeys(int key, int xx, int yy)
 		lx = sin(angle);
 		lz = -cos(angle);
 		if (flagRight == 1) {
-			rotation_z -= 200.0f;
+			rotation_z -= 200.0f; // Doppelt, da Raumschiff bereits nach rechts schaut
 			flagLeft = 1;
 			flagRight = 0;
 		}
 		if (flagLeft == 0) {
-			rotation_z -= 100.0f;
+			rotation_z -= 100.0f; // Raumschiff nach links schauen lassen
 			flagLeft = 1;
 		}
 		break;
@@ -1113,18 +942,19 @@ void processSpecialKeys(int key, int xx, int yy)
 		lx = sin(angle);
 		lz = -cos(angle);
 		if (flagLeft == 1) {
-			rotation_z += 200.0f;
+			rotation_z += 200.0f; // Doppelt, da Raumschiff bereits nach links schaut
 			flagRight = 1;
 			flagLeft = 0;
 		}
 		if (flagRight == 0) {
-			rotation_z += 100.0f;
+			rotation_z += 100.0f; // Raumschiff nach rechts schauen lassen
 			flagRight = 1;
 		}
 		break;
 	case GLUT_KEY_UP:
 		x += lx * fraction;
 		z += lz * fraction;
+		// Rauschiff wieder gerade stellen, Blick nach vorne
 		if (flagLeft == 1) {
 			rotation_z += 100.0f;
 			flagLeft = 0;
@@ -1145,6 +975,7 @@ void processSpecialKeys(int key, int xx, int yy)
 	case GLUT_KEY_DOWN:
 		x -= lx * fraction;
 		z -= lz * fraction;
+		// Raumschiff wieder gerade stellen, Blick nach vorne
 		if (flagLeft == 1) {
 			rotation_z += 100.0f;
 			flagLeft = 0;
