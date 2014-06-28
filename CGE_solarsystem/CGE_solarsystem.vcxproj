@@ -26,18 +26,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3dsloader.cpp" />
-    <ClCompile Include="glm.cpp" />
     <ClCompile Include="GLSLShader.cpp" />
     <ClCompile Include="SolarSystem.cpp" />
     <ClCompile Include="texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3dsloader.h" />
-    <ClInclude Include="glm.h" />
     <ClInclude Include="GLSLShader.h" />
     <ClInclude Include="SolarSystem.h" />
     <ClInclude Include="texture.h" />
-    <ClInclude Include="Tutorial4.h" />
+    <ClInclude Include="Spaceship.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{89CE5068-8F65-48F0-9A37-9A0C806F5693}</ProjectGuid>

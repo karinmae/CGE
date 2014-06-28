@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <io.h>
-#include "tutorial4.h"
+#include "Spaceship.h"
 #include "3dsloader.h"
 
 

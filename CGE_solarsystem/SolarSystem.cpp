@@ -4,7 +4,7 @@
 #include "windows.h"
 #include "SolarSystem.h"
 #include "GLSLShader.h"
-#include "tutorial4.h"
+#include "Spaceship.h"
 #include "texture.h"
 #include "3dsloader.h"
 
@@ -76,7 +76,7 @@ GLfloat	 lightPos[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 /* ---- Textures Variablen----- */
 // Flag, das sicherstellt, dass Texturen nur einmal geladen werden
-bool texturesCreated = false;	
+bool texturesCreated = false;
 
 GLuint sunTexture;
 GLuint mercuryTexture;

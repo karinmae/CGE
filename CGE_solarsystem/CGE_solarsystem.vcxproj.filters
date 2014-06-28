@@ -53,9 +53,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="glm.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="SolarSystem.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -70,9 +67,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="glm.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="SolarSystem.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -85,7 +79,7 @@
     <ClInclude Include="texture.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="Tutorial4.h">
+    <ClInclude Include="Spaceship.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
